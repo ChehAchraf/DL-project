@@ -33,7 +33,7 @@
                 Sign Up
             </h2>
             
-            <form id="signupForm" class="space-y-6" method="POST" action="register.php">
+            <form id="signupForm" class="space-y-6" method="POST" action="helpers/signup_handling.php">
                 <!-- Name Fields -->
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
