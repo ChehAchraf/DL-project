@@ -12,7 +12,7 @@
                 </p>
             </div>
 
-            <form class="mt-8 space-y-6" action="#" method="POST">
+            <form class="mt-8 space-y-6" action="helpers/login_handler.php" method="POST">
                 <!-- Email Input -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -20,6 +20,7 @@
                     </label>
                     <input 
                         type="email" 
+                        name="email"
                         required 
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
                         text-gray-900 dark:text-white 
@@ -35,6 +36,7 @@
                     </label>
                     <input 
                         type="password" 
+                        name = "password"
                         required 
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
                         text-gray-900 dark:text-white 

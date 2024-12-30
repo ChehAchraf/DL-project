@@ -16,14 +16,7 @@ use Classes\User;
 <?php include('template/header.php') ?>
 <?php include('template/hero.php') ?>
 
-<?php 
-if(isset($_SESSION['registred'])):?>
-<script>Swal.fire({
-                    title: "Register Done!",
-                    text: "You can go and Login now!",
-                    icon: "success"
-                });</script>
-<?php endif ?>
+
 
     <section class="container mx-auto px-32 py-12">
         <div class="text-center mb-12">
@@ -498,5 +491,20 @@ if(isset($_SESSION['registred'])):?>
         </div>
     </section>
 
-
+    <?php 
+            if( isset($_SESSION['login_done']) ){
+                ?>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                        <script>
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Youre account has been created, you can login now.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                })
+              </script>
+                <?php
+                unset($_SESSION['login_done']);
+            }
+        ?>
     <?php include('template/footer.php') ?>

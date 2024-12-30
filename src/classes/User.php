@@ -32,13 +32,17 @@ class User{
         $stmt = $pdo->prepare("SELECT  * FROM `users` WHERE email = :email");
         $stmt->execute(['email' => $this->email]);
         $user = $stmt->fetch();
-        if ($user && password_verify($this->password, $user['mot_de_passe'])) {
-            if($user['banned'] == true)
-            {
+        if ($user && password_verify($this->password, $user['password'])) {
+
                 $_SESSION['id'] = $user['id'];
-                $_SESSION['user_role'] = $user['role'];
-            }
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['login_done'] = true;
+                echo "login done";
       
+        }else{
+            echo "no";
         }
     }
+
+    
 }
