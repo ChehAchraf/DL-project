@@ -1,0 +1,20 @@
+{
+    "name": "ashraf/d-l",
+    "description": "Web app to rent cars",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Classes\\": "src/classes/",
+            "Helpers\\": "src/helpers/"
+        }
+    },
+    "authors": [
+        {
+            "name": "ChehAchraf",
+            "email": "achrafchehboun@outlook.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
