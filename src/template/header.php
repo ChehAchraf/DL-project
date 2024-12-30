@@ -4,6 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+    <script>
+        // Dark mode toggle
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('dark-mode', document.documentElement.classList.contains('dark'));
+        }
+
+        // Initialize dark mode
+        function initDarkMode() {
+            if (localStorage.getItem('dark-mode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            ['profile', 'reservations', 'security'].forEach(tab => {
+                document.getElementById(tab + 'Tab').classList.add('hidden');
+                document.getElementById(tab + 'TabBtn').classList.remove('bg-blue-600', 'text-white');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            document.getElementById(tabName + 'TabBtn').classList.add('bg-blue-600', 'text-white');
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initDarkMode();
+            switchTab('profile'); // Default to profile tab
+        }
+    </script>
     <script>
         // Theme toggle logic
         function toggleTheme() {
@@ -37,7 +88,7 @@
                         <img class="h-8 w-8" src="your-logo.png" alt="Logo">
                     </a>
                     <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="#" class="text-white dark:text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                        <a href="index.php" class="text-white dark:text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
                         <a href="#" class="text-white dark:text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">About</a>
                         <a href="#" class="text-white dark:text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Services</a>
                         <a href="#" class="text-white dark:text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Contact</a>
