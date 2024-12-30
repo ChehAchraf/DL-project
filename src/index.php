@@ -5,10 +5,9 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // calling the classes
 use Helpers\Database;
+use Classes\User;
 
 
-$db = new Database();
-$pdo = $db->getConnection();
 
 
 
@@ -17,7 +16,14 @@ $pdo = $db->getConnection();
 <?php include('template/header.php') ?>
 <?php include('template/hero.php') ?>
 
-
+<?php 
+if(isset($_SESSION['registred'])):?>
+<script>Swal.fire({
+                    title: "Register Done!",
+                    text: "You can go and Login now!",
+                    icon: "success"
+                });</script>
+<?php endif ?>
 
     <section class="container mx-auto px-32 py-12">
         <div class="text-center mb-12">

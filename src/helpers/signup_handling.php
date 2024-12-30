@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST"){
         $pdo = $db->getConnection();
         $user = new User($first_name,$last_name,$email,$password);
         echo $user->register($pdo);
+        header("location: ../index.php");
+        exit();
     }
 
 }

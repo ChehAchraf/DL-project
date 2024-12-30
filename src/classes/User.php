@@ -1,6 +1,6 @@
 <?php
 namespace Classes;
-
+session_start();
 class User{
     protected $id;
     protected $name;
@@ -25,7 +25,20 @@ class User{
             'email' => $this->email,
             'password' => $hashedPassword
         ]);
-        return "User registered successfully";
+        $_SESSION['registred'] ;
     }
 
+    public function login($pdo){
+        $stmt = $pdo->prepare("SELECT  * FROM `users` WHERE email = :email");
+        $stmt->execute(['email' => $this->email]);
+        $user = $stmt->fetch();
+        if ($user && password_verify($this->password, $user['mot_de_passe'])) {
+            if($user['banned'] == true)
+            {
+                $_SESSION['id'] = $user['id'];
+                $_SESSION['user_role'] = $user['role'];
+            }
+      
+        }
+    }
 }
