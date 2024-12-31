@@ -1,13 +1,14 @@
-<html>
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<?php 
+// import the autoLoad
+require __DIR__ . '/../../vendor/autoload.php'; 
+
+// calling the classes
+use Helpers\Database;
+use Classes\User;
+
+
+include('../template/header.php') 
+?>
     <script>
         // Dark mode toggle
         function toggleDarkMode() {
@@ -243,47 +244,174 @@
         <div id="add-carTab" class="hidden">
             <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Add New Car</h2>
             <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow">
-                <form class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block mb-2">Car Model</label>
-                        <input 
-                            type="text" 
-                            class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                            placeholder="Enter car model"
-                        >
+
+            <form class="grid md:grid-cols-2 gap-6" action="../helpers/car_add_handling.php" method="POST" enctype="multipart/form-data">
+                <!-- Car Model -->
+                <div>
+                    <label for="model" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Car Model</label>
+                    <input 
+                        type="text" 
+                        id="model"
+                        name="model"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="Enter car model" 
+                        required
+                    >
+                </div>
+
+                <!-- Category -->
+                 <?php 
+                        $db = new Database();
+                        $pdo = $db->getConnection();
+                        $stmt = $pdo->prepare("SELECT * FROM `categories`");
+                        $stmt->execute();
+                    
+                        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    
+                       
+                 ?>
+                <div>
+                    <label for="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Category</label>
+                    <select 
+                        id="category" 
+                        name="category_id"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        required
+                    >
+                        <option value="" disabled selected>Select a category</option>
+                        <?php foreach($categories as $category): ?>
+                        <option value="<?php echo $category['id'] ?>"><?php echo $category['name'] ?></option>
+                        <?php endforeach ?>
+                    </select>
+                </div>
+
+                <!-- Price -->
+                <div>
+                    <label for="price" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Price (Daily Rate)</label>
+                    <input 
+                        type="number" 
+                        id="price"
+                        name="price"
+                        step="0.01"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="Enter daily rate" 
+                        required
+                    >
+                </div>
+
+                <!-- Availability -->
+                <div>
+                    <label for="availability" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Availability</label>
+                    <select 
+                        id="availability" 
+                        name="availability"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        required
+                    >
+                        <option value="" disabled selected>Select availability</option>
+                        <option value="available">Available</option>
+                        <option value="unavailable">Unavailable</option>
+                    </select>
                     </div>
-                    <div>
-                        <label class="block mb-2">Category</label>
-                        <select 
-                            class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                        >
-                            <option>Sedan</option>
-                            <option>SUV</option>
-                            <option>Luxury</option>
-                            <option>Compact</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block mb-2">Daily Rate</label>
-                        <input 
-                            type="number" 
-                            class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                            placeholder="Enter daily rate"
-                        >
-                    </div>
-                    <div>
-                        <label class="block mb-2">Upload Car Image</label>
-                        <input 
-                            type="file" 
-                            class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                        >
-                    </div>
-                    <div class="md:col-span-2">
-                        <button class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                            Add Car
-                        </button>
-                    </div>
-                </form>
+
+                <!-- Mileage -->
+                <div>
+                    <label for="mileage" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Mileage</label>
+                    <input 
+                        type="number" 
+                        id="mileage"
+                        name="mileage"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="Enter mileage (km)" 
+                        required
+                    >
+                </div>
+
+                <!-- Year -->
+                <div>
+                    <label for="year" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Year</label>
+                    <input 
+                        type="number" 
+                        id="year"
+                        name="year"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="Enter year of manufacture" 
+                        min="1900" 
+                        max="2099" 
+                        required
+                    >
+                </div>
+
+                <!-- Fuel Type -->
+                <div>
+                    <label for="fuel_type" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Fuel Type</label>
+                    <select 
+                        id="fuel_type" 
+                        name="fuel_type"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        required
+                    >
+                        <option value="" disabled selected>Select fuel type</option>
+                        <option value="petrol">Petrol</option>
+                        <option value="diesel">Diesel</option>
+                        <option value="electric">Electric</option>
+                        <option value="hybrid">Hybrid</option>
+                    </select>
+                </div>
+
+                <!-- Transmission -->
+                <div>
+                    <label for="transmission" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Transmission</label>
+                    <select 
+                        id="transmission" 
+                        name="transmission"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        required
+                    >
+                        <option value="" disabled selected>Select transmission type</option>
+                        <option value="manual">Manual</option>
+                        <option value="automatic">Automatic</option>
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div class="md:col-span-2">
+                    <label for="description" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Description</label>
+                    <textarea 
+                        id="description"
+                        name="description"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        rows="3"
+                        placeholder="Enter car description" 
+                        required
+                    ></textarea>
+                </div>
+
+                <!-- Upload Car Image -->
+                <div class="md:col-span-2">
+        <label for="car_image" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Upload Car Image</label>
+        <input 
+            type="file" 
+            id="car_image"
+            name="car_image"
+            accept="image/*"
+            class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            required
+        >
+    </div>
+
+                <!-- Submit Button -->
+                <div class="md:col-span-2">
+                    <button 
+                        type="submit" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                    >
+                        Add Car
+                    </button>
+                </div>
+            </form>
+
             </div>
         </div>
 

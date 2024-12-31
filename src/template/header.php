@@ -1,6 +1,4 @@
-<?php 
-session_start();
-?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -157,9 +155,11 @@ session_start();
                             <a href="profile.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 Profile
                             </a>
-                            <a href="logout.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                            <form method="POST" action="helpers/logout_handler.php">
+                            <button  class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 Logout
-                            </a>
+                            </button>
+                            </form>
                         </div>
                     </div>
                 <?php elseif ($_SESSION['role'] == 'admin'): ?>
@@ -176,9 +176,11 @@ session_start();
                             <a href="dashboard.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 Dashboard
                             </a>
-                            <a href="logout.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                            <form action="../helpers/login_handler.php" method="POST">
+                            <button  class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 Logout
-                            </a>
+                            </button>
+                            </form>
                         </div>
                     </div>
                 <?php endif; ?>

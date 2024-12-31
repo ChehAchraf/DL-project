@@ -44,5 +44,10 @@ class User{
         }
     }
 
-    
+    public static function logout(){
+        unset($_SESSION['id']);
+        unset($_SESSION['role']);
+        session_destroy();
+        return true;
+    }
 }
