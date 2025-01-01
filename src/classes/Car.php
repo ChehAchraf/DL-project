@@ -81,8 +81,8 @@ class Car {
     public static function getAllCars($pdo) {
         try {
             $stmt = $pdo->prepare(
-                "SELECT cars.*, categories.name AS category_name 
-                 FROM cars 
+                "SELECT cars.*, categories.name AS category_name
+                 FROM cars
                  LEFT JOIN categories ON cars.category_id = categories.id"
             );
             $stmt->execute();
@@ -121,4 +121,34 @@ class Car {
             throw new Exception("Failed to fetch car details: " . $e->getMessage());
         }
     }
+    public static function filterCars($pdo, $search = '', $category = '') {
+        try {
+            $query = "SELECT c.*, cat.name AS category_name 
+                      FROM cars c 
+                      JOIN categories cat ON c.category_id = cat.id 
+                      WHERE c.model LIKE :search";
+    
+            if ($category && $category !== 'All Categories') {
+                $query .= " AND cat.name LIKE :category";
+            }
+    
+            $stmt = $pdo->prepare($query);
+            
+            $stmt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+    
+            if ($category && $category !== 'All Categories') {
+                $stmt->bindValue(':category', '%' . $category . '%', PDO::PARAM_STR);
+            }
+    
+            $stmt->execute();
+    
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Error fetching filtered cars: " . $e->getMessage());
+        }
+    }
+    
+    
+    
+    
 }

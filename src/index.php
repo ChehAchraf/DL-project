@@ -21,7 +21,7 @@ use Classes\User;
     <section class="container mx-auto px-32 py-12">
         <div class="text-center mb-12">
             <h2 class="text-4xl font-bold dark:text-white mb-4">
-                Our Available Vehicles
+                Our Latest Available Vehicles
             </h2>
             <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                 Choose from our wide range of vehicles. From compact cars to luxury SUVs, we have the perfect ride for every occasion.

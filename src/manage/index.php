@@ -623,3 +623,19 @@ include('../template/header.php')
     </div>
 </body>
 </html>
+<?php 
+            if( isset($_SESSION['car_added']) ){
+                ?>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                        <script>
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Youre account has been created, you can login now.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                })
+              </script>
+                <?php
+                unset($_SESSION['login_done']);
+            }
+        ?>

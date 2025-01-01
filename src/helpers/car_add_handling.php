@@ -24,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         echo $car->addCar($pdo);
+        $_SESSION['car_added'] = "text";
+        header("Location: ../manage/index.php");
+        exit();
 
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage();
