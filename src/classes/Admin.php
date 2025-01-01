@@ -7,6 +7,7 @@ use Exception;
 
 class Admin extends User {
     protected $role = "admin";
+    
 
     public function __construct($name, $secname, $email, $password) {
         parent::__construct($name, $secname, $email, $password);
@@ -61,4 +62,63 @@ class Admin extends User {
             throw new Exception("Failed to update user role: " . $e->getMessage());
         }
     }
+    public static function ReservationHandling($pdo){
+        
+        try {
+            $stmt = $pdo->prepare("SELECT 	
+                                    reservations.id,
+                                    reservations.user_id,
+                                    reservations.car_id,
+                                    reservations.start_date,
+                                    reservations.end_date,
+                                    reservations.pickup_location,
+                                    reservations.return_location,
+                                    reservations.created_at,
+                                    reservations.status,
+                                    users.name,
+                                    cars.model,
+                                    cars.price
+                                FROM 
+                                    reservations
+                                INNER JOIN 
+                                    users ON users.id = reservations.user_id
+                                INNER JOIN 
+                                    cars ON cars.id = reservations.car_id");
+    
+            $stmt->execute();
+    
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);   
+    
+            return $reservations;
+        } catch (PDOException $e) {
+            echo "Error: " . $e->getMessage();
+            return [];
+        }
+    }
+    public function EditStatus($pdo, $res_id, $res_status) {
+        if (isset($res_id) && isset($res_status)) {
+            // تحقق من أن القيمة التي تم إرسالها هي واحدة من الحالات المعتمدة
+            $validStatuses = ['pending', 'approved', 'rejected'];
+            
+            if (in_array($res_status, $validStatuses)) {
+                // إعداد الاستعلام لتحديث حالة الحجز بناءً على id الحجز والحالة المطلوبة
+                $stmt = $pdo->prepare("UPDATE `reservations` SET `status` = :status WHERE `id` = :id");
+    
+                // إضافة تسجيل للحالة
+                echo "Executing query to update status: " . $stmt->queryString;
+                // تنفيذ الاستعلام مع ربط القيم
+                $stmt->execute([
+                    'status' => $res_status,  // تحديث الحالة باستخدام المتغير
+                    'id' => $res_id           // تحديث الحجز باستخدام id
+                ]);
+    
+                echo "Rows affected: " . $stmt->rowCount();  // تحقق من عدد الأسطر المتأثرة
+            } else {
+                echo "Invalid status value.";
+            }
+        }
+    }
+    
+    
+    
 }

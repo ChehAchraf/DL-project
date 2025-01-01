@@ -5,6 +5,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 // calling the classes
 use Helpers\Database;
 use Classes\User;
+use Classes\Admin;
 
 
 include('../template/header.php') 
@@ -73,11 +74,11 @@ include('../template/header.php')
             initCharts();
         }
 
-        // Change reservation status
-        function changeReservationStatus(reservationId, status) {
-            // Placeholder for AJAX call to update status
-            alert(`Changing reservation ${reservationId} to ${status}`);
-        }
+        // // Change reservation status
+        // function changeReservationStatus(reservationId, status) {
+        //     // Placeholder for AJAX call to update status
+        //     alert(`Changing reservation ${reservationId} to ${status}`);
+        // }
     </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 flex">
@@ -419,6 +420,11 @@ include('../template/header.php')
         <div id="reservationsTab" class="hidden">
             <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Reservations</h2>
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+                <?php 
+                    $db = new Database();
+                    $pdo = $db->getConnection();
+                    $reservations = Admin::ReservationHandling($pdo);
+                ?>
                 <table class="w-full">
                     <thead>
                         <tr class="bg-gray-100 dark:bg-gray-900">
@@ -431,49 +437,25 @@ include('../template/header.php')
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="border-b dark:border-gray-700">
-                            <td class="p-4">RES-001</td>
+                    <?php if (!empty($reservations)) : ?>
+                        <?php foreach ($reservations as $reservation) : ?>
                             </thead>
                     <tbody>
                         <tr class="border-b dark:border-gray-700">
-                            <td class="p-4">RES-001</td>
-                            <td class="p-4">John Doe</td>
-                            <td class="p-4">Toyota Camry</td>
-                            <td class="p-4">July 15-22, 2024</td>
+                            <td class="p-4">RES-<?php echo $reservation['id'] ?></td>
+                            <td class="p-4"><?php echo $reservation['name'] ?></td>
+                            <td class="p-4"><?php echo $reservation['model'] ?></td>
+                            <td class="p-4"><?php echo $reservation['start_date']; ?> - <?php echo $reservation['end_date']; ?></td>
                             <td class="p-4">
                                 <select 
-                                    onchange="changeReservationStatus('RES-001', this.value)"
+                                    onchange="changeReservationStatus('<?php echo $reservation['id']; ?>', this.value)"
                                     class="px-2 py-1 rounded bg-yellow-100 text-yellow-800"
+                                    data-reservation-id="<?php echo $reservation['id']; ?>"
+                                    data-current-status="<?php echo $reservation['status']; ?>"
                                 >
-                                    <option value="pending" selected>Pending</option>
-                                    <option value="approved">Approved</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </td>
-                            <td class="p-4">
-                                <button class="text-blue-500 mr-2" title="View Details">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="text-red-500" title="Cancel Reservation">
-                                    <i class="fas fa-times-circle"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="border-b dark:border-gray-700">
-                            <td class="p-4">RES-002</td>
-                            <td class="p-4">Jane Smith</td>
-                            <td class="p-4">Honda Civic</td>
-                            <td class="p-4">August 5-10, 2024</td>
-                            <td class="p-4">
-                                <select 
-                                    onchange="changeReservationStatus('RES-002', this.value)"
-                                    class="px-2 py-1 rounded bg-green-100 text-green-800"
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="approved" selected>Approved</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
+                                    <option value="pending" <?php echo $reservation['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                    <option value="approved" <?php echo $reservation['status'] == 'approved' ? 'selected' : ''; ?>>Approved</option>
+                                    <option value="rejected" <?php echo $reservation['status'] == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
                                 </select>
                             </td>
                             <td class="p-4">
@@ -486,6 +468,12 @@ include('../template/header.php')
                             </td>
                         </tr>
                     </tbody>
+                    <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr>
+                            <td colspan="6" class="p-4 text-center">No reservations found.</td>
+                        </tr>
+                    <?php endif; ?>
                 </table>
             </div>
         </div>
@@ -621,21 +609,24 @@ include('../template/header.php')
             </div>
         </div>
     </div>
+    <script>
+function changeReservationStatus(reservationId, newStatus) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', '../helpers/update_status.php?id=' + reservationId + '&status=' + newStatus, true);
+    
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    console.log("Status updated successfully");
+                } else {
+                    console.error("Error updating status");
+                }
+            };
+            
+            xhr.send(); 
+    }
+
+
+    </script>
 </body>
+
 </html>
-<?php 
-            if( isset($_SESSION['car_added']) ){
-                ?>
-                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-                        <script>
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Youre account has been created, you can login now.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                })
-              </script>
-                <?php
-                unset($_SESSION['login_done']);
-            }
-        ?>
