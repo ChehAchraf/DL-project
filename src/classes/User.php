@@ -33,14 +33,12 @@ class User{
         $stmt->execute(['email' => $this->email]);
         $user = $stmt->fetch();
         if ($user && password_verify($this->password, $user['password'])) {
-
                 $_SESSION['id'] = $user['id'];
                 $_SESSION['role'] = $user['role'];
-                $_SESSION['login_done'] = true;
-                echo "login done";
+                echo $_SESSION['role'];
       
         }else{
-            echo "no";
+            echo "la matloginach";
         }
     }
 

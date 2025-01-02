@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] == "POST"){
         $pdo = $db->getConnection();
         $user = new User("","",$email,$password);
         echo $user->login($pdo);
-        echo $_SESSION['login_done'];
         header("Location: ../index.php");
 }
 }

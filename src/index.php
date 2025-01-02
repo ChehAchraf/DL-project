@@ -2,15 +2,10 @@
 
 // import the autoLoad
 require __DIR__ . '/../vendor/autoload.php'; 
-
+session_start();
 // calling the classes
 use Helpers\Database;
 use Classes\User;
-
-
-
-
-
 ?>
 
 <?php include('template/header.php') ?>
