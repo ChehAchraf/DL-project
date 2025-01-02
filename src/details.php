@@ -1,5 +1,6 @@
 <?php
 session_start();
+echo $_SESSION['id'];
 // import the autoLoad
 require __DIR__ . '/../vendor/autoload.php'; 
 
@@ -204,9 +205,11 @@ use Classes\Car;
             </div>
 
             <!-- Modal Body -->
-            <form id="reservationForm" class="p-6">
+            <form method="POST" id="reservationForm" onsubmit="submitReservation(event)" class="p-6">
                 <div class="grid grid-cols-1 gap-4">
                     <!-- Car Selection (if multiple cars) -->
+                     <input name="car_id" type="number"  value="<?php echo $detail['id'] ?>">
+                     <input name="user_id" type="number"  value="<?php echo $_SESSION['id'] ?>">
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                             Selected Car
@@ -215,22 +218,22 @@ use Classes\Car;
                             type="text" 
                             id="carName" 
                             class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600" 
-                            value="Mercedes-Benz C-Class" 
+                            value="<?php echo $detail['model']; ?>" 
                             readonly
                         >
-                        <input 
+                        <!-- <input 
                             type="hidden" 
                             id="carId" 
                             name="car_id"
-                        >
+                        > -->
                     </div>
 
                     <!-- Date Range -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Start Date
-                            </label>
+                        <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Start Date
+                        </label>
                             <input 
                                 type="date" 
                                 id="startDate" 
@@ -290,7 +293,11 @@ use Classes\Car;
                     </div>
 
                     <!-- Price Calculation (Optional) -->
-                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mt-4">
+                    <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-300">Car Price</span>
+                            <span id="Carprice" class="font-semibold dark:text-white"><?php echo $detail['price'] ?></span>
+                        </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600 dark:text-gray-300">Rental Days</span>
                             <span id="rentalDays" class="font-semibold dark:text-white">0</span>
@@ -325,6 +332,66 @@ use Classes\Car;
     </div>
 
     <script>
+
+function submitReservation(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const form = document.getElementById('reservationForm');
+    const formData = new FormData(form);
+
+    // Log form data for debugging
+    for (const [key, value] of formData.entries()) {
+        console.log(key + ': ' + value);
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'helpers/reservation_handler.php', true);
+    
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            console.log('Reservation successful:', xhr.responseText);
+            alert('Reservation completed successfully!');
+        } else {
+            console.error('Error occurred:', xhr.statusText);
+            alert('Failed to complete the reservation.');
+        }
+    };
+
+    xhr.onerror = function () {
+        console.error('Request error.');
+        alert('An error occurred while processing the reservation.');
+    };
+
+    xhr.send(formData); // Send the form data
+}
+
+
+
+const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const rentalDaysSpan = document.getElementById('rentalDays');
+    const totalPriceSpan = document.getElementById('totalPrice');
+
+    const pricePerDay = document.getElementById('Carprice').textContent;
+
+    endDateInput.addEventListener('change', () => {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+
+        if (isNaN(startDate) || isNaN(endDate) || endDate < startDate) {
+            rentalDaysSpan.textContent = "0";
+            totalPriceSpan.textContent = "$0";
+            return;
+        }
+
+        const rentalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+        rentalDaysSpan.textContent = rentalDays;
+
+        const totalPrice = rentalDays * pricePerDay;
+        totalPriceSpan.textContent = `$${totalPrice}`;
+    });
+
         document.getElementById('reserv').addEventListener('click' , function(){
             document.getElementById('reservationModal').style.display = "block";
         })

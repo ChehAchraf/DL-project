@@ -5,6 +5,7 @@ use Classes\Car;
 use Classes\User;
 use Classes\Admin;
 use Helpers\Database;
+use Classes\Client;
 
 // $db = new Database();
 // $pdo = $db->getConnection();
@@ -18,21 +19,9 @@ use Helpers\Database;
 // $car = new Car("Tesla Model S", 79999.99, "available", 1, 10000, 2022, "electric", "automatic", "A premium electric vehicle.");
 // echo $car->addCar($pdo);
 
-try {
-    $db = new Database();
-    $pdo = $db->getConnection();
-    $stmt = $pdo->prepare("SELECT * FROM `categories`");
-    $stmt->execute();
+$db = new Database();
+$pdo = $db->getConnection();
+$client = new Client("","","","",1);
+$client->ReserveCar($pdo,9,"04/02/2025","04/03/2025","ELhajeb","Fes");
 
-    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($categories as $category) {
-        echo "ID: " . $category['id'] . "<br>";
-        echo "Name: " . $category['name'] . "<br>";
-    }
-
-} catch(PDOException $e) {
-    echo "Error: " . $e->getMessage();
-}
-                 
 
