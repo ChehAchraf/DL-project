@@ -32,5 +32,8 @@ class Client extends User {
         ]);
         return "done";
     }
+    // public function AddReview($pdo,$userid,$carid,$comment,$is_deleted=false){
+    //     $stmt = $pdo->prepare("SELECT INNTO ")
+    // }
 }
 ?>
