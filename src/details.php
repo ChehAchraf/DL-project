@@ -6,21 +6,32 @@ require __DIR__ . '/../vendor/autoload.php';
 // calling the classes
 use Helpers\Database;
 use Classes\User;
+use Classes\Car;
 
 ?>  
 <?php if( isset($_SESSION['role']) && $_SESSION['role'] == "client" ){ ?>
 <?php include('template/header.php') ?>
 <?php include('template/hero.php') ?>
 
-  
+    
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
             <!-- Car Image Gallery -->
+            <?php
+                if(isset($_GET['id'])){
+                    $id = $_GET['id'];
+                    $db = new Database();
+                    $pdo = $db->getConnection();
+                    $car = new Car("","","","","","","","","");
+                    $detail = $car->getCarDetails($pdo,$id);
+
+                }  
+                ?>
             <div class="grid md:grid-cols-2 gap-4">
                 <!-- Main Image Section -->
                 <div class="p-4">
                     <img id="mainImage" 
-                         src="path/to/car-image.jpg" 
+                         src="<?php echo $detail['img_path']; ?>" 
                          alt="Car Main Image" 
                          class="w-full h-96 object-cover rounded-lg">
                     
@@ -33,16 +44,16 @@ use Classes\User;
                 <!-- Car Details Section -->
                 <div class="p-6">
                     <h1 class="text-3xl font-bold mb-4 dark:text-white" id="carTitle">
-                        Mercedes-Benz C-Class
+                        <?php echo $detail['model']; ?>
                     </h1>
 
                     <!-- Price and Status -->
                     <div class="flex items-center mb-4">
                         <span class="text-2xl font-semibold text-blue-600 dark:text-blue-400" id="carPrice">
-                            $45,000
+                            <?php echo $detail['price']; ?>
                         </span>
-                        <span class="ml-4 px-3 py-1 bg-green-100 text-green-800 rounded-full" id="carStatus">
-                            Available
+                        <span class="ml-4 px-3 py-1 bg-<?php echo ($detail['availability'] == 'unavailable')? "red" : "green" ?>-100 text-<?php echo ($detail['availability'] == 'unavailable')? "white" : "green" ?>-800 rounded-full" id="carStatus">
+                        <?php echo $detail['availability']; ?>
                         </span>
                     </div>
 
@@ -50,7 +61,7 @@ use Classes\User;
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div>
                             <p class="text-gray-500 dark:text-gray-400">Make</p>
-                            <p class="font-medium dark:text-white" id="carMake">Mercedes-Benz</p>
+                            <p class="font-medium dark:text-white" id="carMake"><?php echo $detail['model']; ?></p>
                         </div>
                         <div>
                             <p class="text-gray-500 dark:text-gray-400">Model</p>
@@ -58,11 +69,11 @@ use Classes\User;
                         </div>
                         <div>
                             <p class="text-gray-500 dark:text-gray-400">Year</p>
-                            <p class="font-medium dark:text-white" id="carYear">2022</p>
+                            <p class="font-medium dark:text-white" id="carYear"><?php echo $detail['year']; ?></p>
                         </div>
                         <div>
                             <p class="text-gray-500 dark:text-gray-400">Mileage</p>
-                            <p class="font-medium dark:text-white" id="carMileage">15,000 miles</p>
+                            <p class="font-medium dark:text-white" id="carMileage"><?php echo $detail['mileage']; ?></p>
                         </div>
                     </div>
 
@@ -70,8 +81,7 @@ use Classes\User;
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2 dark:text-white">Description</h3>
                         <p class="text-gray-600 dark:text-gray-300" id="carDescription">
-                            Luxury sedan with advanced technology and superior comfort. 
-                            Perfect for those who demand the best in automotive engineering.
+                            <?php echo $detail['description']; ?>.
                         </p>
                     </div>
 

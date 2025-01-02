@@ -155,7 +155,7 @@
                                         </svg>
                                         Book Now
                                     </button>
-                                    <button class="flex-1 border border-blue-500 text-blue-500 
+                                    <a  href="details.php?id=<?php echo $car['id'] ?>"class="flex-1 border border-blue-500 text-blue-500 
                                                 dark:border-blue-400 dark:text-blue-400
                                                 py-3 rounded-lg hover:bg-blue-50 
                                                 dark:hover:bg-blue-900 transition flex items-center justify-center">
@@ -163,7 +163,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         View Details
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </div>
