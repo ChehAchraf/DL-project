@@ -60,7 +60,16 @@
      <?php 
         $db = new Database();
         $pdo = $db->getConnection();
-        $cars = Car::getAllCars($pdo);
+        if (isset($_GET['page'])) {
+            $page = $_GET['page'];
+        } else {
+            $page = 1;
+        }
+        $car = new car("","","","","","","","","","");
+        $totalrows = $car->Nbr_cars($pdo);
+        $rowsperpage = $car->getLinesParPage();
+        $totalPages = ceil($totalrows / $rowsperpage);
+        $cars = $car->getAllCars($pdo,$page);
      ?>
     <main class="container mx-auto px-32 py-12">
     <div id="carsContainer" class="grid md:grid-cols-3 gap-8 py-12">
@@ -169,6 +178,45 @@
                         </div>
                     <?php endforeach ?>
                 </div>
+                <div class="flex justify-center mt-12">
+    <div class="inline-flex space-x-2">
+        <!-- Previous Button -->
+        <?php if ($page > 1): ?>
+            <a href="?page=<?= $page - 1 ?>" class="px-4 py-2 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                Previous
+            </a>
+        <?php else: ?>
+            <span class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-500 cursor-not-allowed">
+                Previous
+            </span>
+        <?php endif; ?>
+
+        <!-- Page Numbers -->
+        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <?php if ($page === $i): ?>
+                <span class="px-4 py-2 bg-blue-600 text-white rounded-md">
+                    <?= $i ?>
+                </span>
+            <?php else: ?>
+                <a href="?page=<?= $i ?>" class="px-4 py-2 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <?= $i ?>
+                </a>
+            <?php endif; ?>
+        <?php endfor; ?>
+
+        <!-- Next Button -->
+        <?php if ($page < $totalPages): ?>
+            <a href="?page=<?= $page + 1 ?>" class="px-4 py-2 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                Next
+            </a>
+        <?php else: ?>
+            <span class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-500 cursor-not-allowed">
+                Next
+            </span>
+        <?php endif; ?>
+    </div>
+</div>
+
             </main>
     </div>
 

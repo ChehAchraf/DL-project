@@ -16,6 +16,7 @@ class Car {
     private $transmission;
     private $description;
     private $imgPath;
+    protected $lignes_par_page = 2;
 
     public function __construct($model, $price, $availability, $categoryId, $mileage, $year, $fuelType, $transmission, $description, $imgPath = null) {
         $this->model = $model;
@@ -78,18 +79,24 @@ class Car {
         }
     }
 
-    public static function getAllCars($pdo) {
-        try {
-            $stmt = $pdo->prepare(
-                "SELECT cars.*, categories.name AS category_name
-                 FROM cars
-                 LEFT JOIN categories ON cars.category_id = categories.id"
-            );
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            throw new Exception("Failed to fetch cars: " . $e->getMessage());
-        }
+    public function getLinesParPage(){
+        return $this->lignes_par_page;
+    }
+
+    public function Nbr_cars($pdo){
+        $query = $pdo->prepare("SELECT count(*) AS total FROM cars");
+        $query->execute();
+        $result = $query->fetch();
+        return $result['total'];
+    }
+    
+    public  function getAllCars($pdo, $page = 1) {
+        $offset = ($page - 1) * $this->lignes_par_page;
+        $query = $pdo->prepare("SELECT * FROM cars LIMIT :offset, :limit");
+        $query->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $query->bindParam(':limit', var: $this->lignes_par_page, type: PDO::PARAM_INT);
+        $query->execute();
+        return $query->fetchAll();
     }
 
     public static function searchCars($pdo, $keyword) {

@@ -1,39 +1,63 @@
 <?php 
 namespace Classes;
 use Classes\User;
-session_start();
-class Client extends User {
-    protected $userid;
-
-    public function __construct($name, $secname, $email, $password, $userid = null) {
-        parent::__construct($name, $secname, $email, $password);
-        $this->userid = $userid ?: $_SESSION['id']; 
-    }
-
-    public function ReserveCar($pdo, $carid, $st_date, $end_date, $pickup_location, $return_location) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM cars WHERE id = :car_id");
-        $stmt->execute(['car_id' => $carid]);
-        if ($stmt->fetchColumn() == 0) {
-            throw new \Exception("Invalid car IDff echo{$carid}. ");
-        }
-    
-        $stmt = $pdo->prepare(
-            "INSERT INTO `reservations` 
-            (`user_id`, `car_id`, `start_date`, `end_date`, `pickup_location`, `return_location`)
-            VALUES (:user_id, :car_id, :st_date, :end_date, :pickup_location, :return_location)"
-        );
-        $stmt->execute([
-            'user_id' => $this->userid,  
-            'car_id' => $carid,
-            'st_date' => $st_date,
-            'end_date' => $end_date,
-            'pickup_location' => $pickup_location,
-            'return_location' => $return_location
-        ]);
-        return "done";
-    }
-    // public function AddReview($pdo,$userid,$carid,$comment,$is_deleted=false){
-    //     $stmt = $pdo->prepare("SELECT INNTO ")
-    // }
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-?>
+class Client extends User {
+    public function __construct($name, $secname, $email, $password) {
+        parent::__construct($name, $secname, $email, $password);
+    }
+
+    public function hasReservation($pdo) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) AS reservation_count FROM reservations WHERE user_id = :user_id");
+        $stmt->execute(['user_id' => $_SESSION['id']]);
+        $result = $stmt->fetch();
+        return $result['reservation_count'] > 0;
+    }
+
+    public function hasReviewedCar($pdo, $carId) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) AS review_count FROM reviews WHERE user_id = :user_id AND car_id = :car_id AND is_deleted = FALSE");
+        $stmt->execute(['user_id' => $_SESSION['id'], 'car_id' => $carId]);
+        $result = $stmt->fetch();
+        return $result['review_count'] > 0;
+    }
+
+    public function submitReview($pdo, $carId, $reviewText, $rating) {
+        if (!$this->hasReservation($pdo)) {
+            throw new \Exception("You must make a reservation before submitting a review.");
+        }
+
+        if ($this->hasReviewedCar($pdo, $carId)) {
+            throw new \Exception("You have already reviewed this car.");
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO reviews (user_id, car_id, comment, rating) VALUES (:user_id, :car_id, :comment, :rating)");
+        $stmt->execute([
+            'user_id' => $_SESSION['id'],
+            'car_id' => $carId,
+            'comment' => $reviewText,
+            'rating' => $rating
+        ]);
+
+        return "Review submitted successfully!";
+    }
+
+    public function deleteReview($pdo, $reviewId) {
+        $stmt = $pdo->prepare("SELECT * FROM reviews WHERE id = :review_id AND user_id = :user_id AND is_deleted = FALSE");
+        $stmt->execute([
+            'review_id' => $reviewId,
+            'user_id' => $_SESSION['id']
+        ]);
+
+        $review = $stmt->fetch();
+        if (!$review) {
+            throw new \Exception("You can only delete your own reviews, or the review doesn't exist.");
+        }
+
+        $stmt = $pdo->prepare("UPDATE reviews SET is_deleted = TRUE WHERE id = :review_id");
+        $stmt->execute(['review_id' => $reviewId]);
+
+        return "Review deleted successfully!";
+    }
+}

@@ -7,8 +7,10 @@ require __DIR__ . '/../vendor/autoload.php';
 // calling the classes
 use Helpers\Database;
 use Classes\User;
+use Classes\Client;
 use Classes\Car;
-
+$db = new Database();
+$pdo = $db->getConnection();
 ?>  
 <?php if( isset($_SESSION['role']) && $_SESSION['role'] == "client" ){ ?>
 <?php include('template/header.php') ?>
@@ -115,12 +117,18 @@ use Classes\Car;
             </div>
             
 
-
+            <?php 
+                $client = new Client("","","","","");
+                $carid = $detail['id'] ;
+                $reviewText = "Amazing car, would rent again!";
+                $rating = 5;
+                // echo $client->submitReview($pdo, $carid, $reviewText, $rating);
+            ?>
             <!-- Reviews Section -->
             <div class="p-6 bg-gray-50 dark:bg-gray-700">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-2xl font-bold dark:text-white">Customer Reviews</h3>
-                    <div class="overall-rating flex items-center">
+                    <!-- <div class="overall-rating flex items-center">
                         <span class="text-xl font-semibold mr-2">4.5</span>
                         <div class="stars flex">
                             <i class="fas fa-star star active"></i>
@@ -130,13 +138,13 @@ use Classes\Car;
                             <i class="fas fa-star-half-alt star active"></i>
                         </div>
                         <span class="ml-2 text-gray-500 dark:text-gray-300">(24 Reviews)</span>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Review List -->
-                <div class="space-y-4" id="reviewContainer">
+                <!-- <div class="space-y-4" id="reviewContainer">
                     <!-- Individual Review Template -->
-                    <div class="review bg-white dark:bg-gray-600 p-4 rounded-lg shadow-md">
+                    <!-- <div class="review bg-white dark:bg-gray-600 p-4 rounded-lg shadow-md">
                         <div class="flex justify-between items-center mb-2">
                             <div class="flex items-center">
                                 <img src="path/to/user-avatar.jpg" alt="User Avatar" class="w-10 h-10 rounded-full mr-3">
@@ -160,7 +168,7 @@ use Classes\Car;
                     </div>
 
                     <!-- More Reviews Would Be Added Dynamically -->
-                </div>
+                <!-- </div> -->
 
                 <!-- Write a Review Section -->
                 <div class="mt-6 bg-white dark:bg-gray-600 p-6 rounded-lg">
