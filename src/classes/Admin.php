@@ -32,9 +32,8 @@ class Admin extends User {
 
     public function deleteUser($pdo, $userId) {
         try {
-            $stmt = $pdo->prepare("DELETE FROM `users` WHERE id = :id");
-            $stmt->execute(['id' => $userId]);
-            echo "User with ID $userId has been deleted successfully.";
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND role != 'admin'");
+            return $stmt->execute([$userId]);
         } catch (PDOException $e) {
             throw new Exception("Failed to delete user: " . $e->getMessage());
         }
@@ -42,22 +41,25 @@ class Admin extends User {
 
     public function listUsers($pdo) {
         try {
-            $stmt = $pdo->query("SELECT id, name, s_name, email, role FROM `users`");
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return $users;
+            $stmt = $pdo->query("
+                SELECT id, name, s_name, email, role, created_at 
+                FROM `users` 
+                ORDER BY created_at DESC
+            ");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             throw new Exception("Failed to fetch users: " . $e->getMessage());
         }
     }
-
+    
     public function updateUserRole($pdo, $userId, $newRole) {
         try {
-            $stmt = $pdo->prepare("UPDATE `users` SET role = :role WHERE id = :id");
-            $stmt->execute([
-                'role' => $newRole,
-                'id' => $userId
-            ]);
-            echo "User with ID $userId has been updated to role $newRole.";
+            if (!in_array($newRole, ['client', 'admin'])) {
+                throw new Exception("Invalid role specified");
+            }
+            
+            $stmt = $pdo->prepare("UPDATE users SET role = ? WHERE id = ?");
+            return $stmt->execute([$newRole, $userId]);
         } catch (PDOException $e) {
             throw new Exception("Failed to update user role: " . $e->getMessage());
         }

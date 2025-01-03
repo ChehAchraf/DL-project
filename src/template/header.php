@@ -177,7 +177,7 @@
                             <a href="dashboard.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 Dashboard
                             </a>
-                            <form action="../helpers/login_handler.php" method="POST">
+                            <form action="helpers/logout_handler.php" method="POST">
                             <button  class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 Logout
                             </button>

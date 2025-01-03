@@ -493,65 +493,66 @@ include('../template/header.php')
                     </button>
                 </div>
             </div>
-
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-100 dark:bg-gray-900">
-                            <th class="p-4 text-left">ID</th>
-                            <th class="p-4 text-left">Name</th>
-                            <th class="p-4 text-left">Email</th>
-                            <th class="p-4 text-left">Total Reservations</th>
-                            <th class="p-4 text-left">Registered Date</th>
-                            <th class="p-4 text-left">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b dark:border-gray-700">
-                            <td class="p-4">CLI-001</td>
-                            <td class="p-4">John Doe</td>
-                            <td class="p-4">john.doe@example.com</td>
-                            <td class="p-4">
-                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                    3 Reservations
-                                </span>
-                            </td>
-                            <td class="p-4">June 15, 2023</td>
-                            <td class="p-4">
-                                <div class="flex space-x-2">
-                                    <button class="text-blue-500" title="View Profile">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="text-red-500" title="Disable Account">
-                                        <i class="fas fa-ban"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="border-b dark:border-gray-700">
-                            <td class="p-4">CLI-002</td>
-                            <td class="p-4">Jane Smith</td>
-                            <td class="p-4">jane.smith@example.com</td>
-                            <td class="p-4">
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                    5 Reservations
-                                </span>
-                            </td>
-                            <td class="p-4">May 20, 2023</td>
-                            <td class="p-4">
-                                <div class="flex space-x-2">
-                                    <button class="text-blue-500" title="View Profile">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="text-red-500" title="Disable Account">
-                                        <i class="fas fa-ban"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <?php 
+                try {
+                    $admin = new Admin("","","","");
+                    $users = $admin->listUsers($pdo);
+                } catch (Exception $e) {
+                    echo "Error: " . $e->getMessage();
+                    exit;
+                }
+            ?>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+    <table class="w-full">
+        <thead>
+            <tr class="bg-gray-100 dark:bg-gray-900">
+                <th class="p-4 text-left">ID</th>
+                <th class="p-4 text-left">Name</th>
+                <th class="p-4 text-left">Email</th>
+                <th class="p-4 text-left">Total Reservations</th>
+                <th class="p-4 text-left">Registered Date</th>
+                <th class="p-4 text-left">Role</th>
+                <th class="p-4 text-left">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($users as $user): ?>
+            <tr class="border-b dark:border-gray-700" id="user-row-<?php echo $user['id']; ?>">
+                <td class="p-4">CLI-<?php echo str_pad($user['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                <td class="p-4"><?php echo htmlspecialchars($user['name'] . ' ' . $user['s_name']); ?></td>
+                <td class="p-4"><?php echo htmlspecialchars($user['email']); ?></td>
+                <td class="p-4">
+                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        3 Reservations
+                    </span>
+                </td>
+                <td class="p-4"><?php echo date('F d, Y', strtotime($user['created_at'])); ?></td>
+                <td class="p-4">
+                    <select 
+                        class="role-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        onchange="updateRole(<?php echo $user['id']; ?>, this.value)"
+                        <?php echo $user['role'] === 'admin' ? 'disabled' : ''; ?>
+                    >
+                        <option value="client" <?php echo $user['role'] === 'client' ? 'selected' : ''; ?>>Client</option>
+                        <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                    </select>
+                </td>
+                <td class="p-4">
+                    <?php if ($user['role'] !== 'admin'): ?>
+                    <button 
+                        class="text-red-500 hover:text-red-700" 
+                        title="Delete User" 
+                        onclick="deleteUser(<?php echo $user['id']; ?>)"
+                    >
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 
             <!-- Pagination -->
             <div class="flex justify-between items-center mt-6">
@@ -627,6 +628,8 @@ function changeReservationStatus(reservationId, newStatus) {
 
 
     </script>
+    <!-- Include the JavaScript file -->
+<script src="../js/useractions.js"></script>
 </body>
 
 </html>

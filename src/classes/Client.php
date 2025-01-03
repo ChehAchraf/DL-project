@@ -39,7 +39,6 @@ class Client extends User {
             'comment' => $reviewText,
             'rating' => $rating
         ]);
-
         return "Review submitted successfully!";
     }
 

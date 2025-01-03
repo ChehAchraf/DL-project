@@ -118,11 +118,21 @@ $pdo = $db->getConnection();
             
 
             <?php 
-                $client = new Client("","","","","");
-                $carid = $detail['id'] ;
-                $reviewText = "Amazing car, would rent again!";
-                $rating = 5;
-                // echo $client->submitReview($pdo, $carid, $reviewText, $rating);
+                if($_SERVER['REQUEST_METHOD'] == "POST"){
+                    try{
+                        $client = new Client("","","","","");
+                        $carid = $detail['id'];
+                        $reviewText = $_POST['description'];
+                        $rating = 5;
+                        $add_the_review = $client->submitReview($pdo, $carid, $reviewText, $rating);
+                        $review_added = "Your Review Has been added seccufully";
+                    }catch(Exception $e){
+                        $alreadyaddad =  $e->getMessage();
+                    }
+                }
+                
+                
+                
             ?>
             <!-- Reviews Section -->
             <div class="p-6 bg-gray-50 dark:bg-gray-700">
@@ -173,22 +183,33 @@ $pdo = $db->getConnection();
                 <!-- Write a Review Section -->
                 <div class="mt-6 bg-white dark:bg-gray-600 p-6 rounded-lg">
                     <h4 class="text-xl font-semibold mb-4 dark:text-white">Write a Review</h4>
-                    <form id="reviewForm" class="space-y-4">
-                        <div class="rating-input flex items-center mb-4">
-                            <span class="mr-4 dark:text-white">Your Rating:</span>
-                            <div class="review-stars flex">
-                                <i class="fas fa-star star cursor-pointer" data-rating="1"></i>
-                                <i class="fas fa-star star cursor-pointer" data-rating="2"></i>
-                                <i class="fas fa-star star cursor-pointer" data-rating="3"></i>
-                                <i class="fas fa-star star cursor-pointer" data-rating="4"></i>
-                                <i class="fas fa-star star cursor-pointer" data-rating="5"></i>
-                            </div>
-                        </div>
+                        <form  method="POST" action="" class="space-y-4">
                         <textarea 
+                            name = "description"
                             class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:text-white" 
                             rows="4" 
                             placeholder="Share your experience..."
                         ></textarea>
+                        <?php if(isset($alreadyaddad)): ?>
+
+                                <script>
+                                    const Toast = Swal.mixin({
+                                    toast: true,
+                                    position: "top-end",
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    didOpen: (toast) => {
+                                        toast.onmouseenter = Swal.stopTimer;
+                                        toast.onmouseleave = Swal.resumeTimer;
+                                    }
+                                    });
+                                    Toast.fire({
+                                    icon: "info",
+                                    title: "You Have already reviewed This car"
+                                });
+                                </script>
+                        <?php endif ?>
                         <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
                             Submit Review
                         </button>
