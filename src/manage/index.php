@@ -4,6 +4,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 // calling the classes
 use Helpers\Database;
+use Classes\Car;
 use Classes\User;
 use Classes\Admin;
 
@@ -206,9 +207,18 @@ include('../template/header.php')
                 </div>
             </div>
         </div>
-
+        <?php 
+            try {
+                $db = new Database();
+                $pdo = $db->getConnection();
+                $cars = Car::getAllCarsWithCategories($pdo);
+            } catch (Exception $e) {
+                echo "Error: " . $e->getMessage();
+                exit;
+            }
+        ?>
         <!-- Manage Cars Tab -->
-        <div id="carsTab" class="hidden">
+        <div id="carsTab">
             <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Manage Cars</h2>
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
                 <table class="w-full">
@@ -223,23 +233,38 @@ include('../template/header.php')
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="border-b dark:border-gray-700">
-                            <td class="p-4">CAR-001</td>
-                            <td class="p-4">Toyota Camry</td>
-                            <td class="p-4">Sedan</td>
-                            <td class="p-4">$45/day</td>
+                        <?php foreach ($cars as $car): ?>
+                        <tr class="border-b dark:border-gray-700" id="car-row-<?php echo $car['id']; ?>">
+                            <td class="p-4">CAR-<?php echo str_pad($car['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                            <td class="p-4"><?php echo htmlspecialchars($car['model']); ?></td>
+                            <td class="p-4"><?php echo htmlspecialchars($car['category_name']); ?></td>
+                            <td class="p-4">$<?php echo number_format($car['price'], 2); ?>/day</td>
                             <td class="p-4">
-                                <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Available</span>
+                                <span class="px-2 py-1 rounded-full text-xs <?php echo $car['availability'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
+                                    <?php echo $car['availability'] ? 'Available' : 'Not Available'; ?>
+                                </span>
                             </td>
                             <td class="p-4">
-                                <button class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
-                                <button class="text-red-500"><i class="fas fa-trash"></i>>
+                                <div class="flex space-x-2">
+                                    <button class="text-blue-500 hover:text-blue-700" title="Edit Car">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button 
+                                        class="text-red-500 hover:text-red-700" 
+                                        title="Delete Car" 
+                                        onclick="deleteCar(<?php echo $car['id']; ?>)"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </div>
+
 
         <!-- Add New Car Tab -->
         <div id="add-carTab" class="hidden">
@@ -630,6 +655,7 @@ function changeReservationStatus(reservationId, newStatus) {
     </script>
     <!-- Include the JavaScript file -->
 <script src="../js/useractions.js"></script>
+<script src="../js/carAction.js"></script>
 </body>
 
 </html>

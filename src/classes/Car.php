@@ -155,7 +155,31 @@ class Car {
         }
     }
     
-    
+    // Add this to the Car class
+    public static function deleteCar($pdo, $carId) {
+        try {
+            $stmt = $pdo->prepare("DELETE FROM cars WHERE id = ?");
+            return $stmt->execute([$carId]);
+        } catch (PDOException $e) {
+            throw new Exception("Failed to delete car: " . $e->getMessage());
+        }
+    }
+
+    // Add this to get all cars with category names
+    public static function getAllCarsWithCategories($pdo) {
+        try {
+            $stmt = $pdo->query("
+                SELECT c.*, cat.name as category_name 
+                FROM cars c
+                LEFT JOIN categories cat ON c.category_id = cat.id
+                ORDER BY c.id DESC
+            ");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Failed to fetch cars: " . $e->getMessage());
+        }
+    }
+
     
     
 }

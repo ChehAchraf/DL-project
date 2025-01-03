@@ -7,6 +7,7 @@ require __DIR__ . '/../vendor/autoload.php';
 // calling the classes
 use Helpers\Database;
 use Classes\User;
+use Classes\ReviewsList;
 use Classes\Client;
 use Classes\Car;
 $db = new Database();
@@ -117,23 +118,23 @@ $pdo = $db->getConnection();
             </div>
             
 
-            <?php 
-                if($_SERVER['REQUEST_METHOD'] == "POST"){
-                    try{
-                        $client = new Client("","","","","");
-                        $carid = $detail['id'];
-                        $reviewText = $_POST['description'];
-                        $rating = 5;
-                        $add_the_review = $client->submitReview($pdo, $carid, $reviewText, $rating);
-                        $review_added = "Your Review Has been added seccufully";
-                    }catch(Exception $e){
-                        $alreadyaddad =  $e->getMessage();
-                    }
-                }
+            <!-- //<?php 
+                // if($_SERVER['REQUEST_METHOD'] == "POST"){
+                //     try{
+                //         $client = new Client("","","","","");
+                //         $carid = $detail['id'];
+                //         $reviewText = $_POST['comment'];
+                //         $rating = 5;
+                //         $add_the_review = $client->submitReview($pdo, $carid, $reviewText, $rating);
+                //         $review_added = "Your Review Has been added seccufully";
+                //     }catch(Exception $e){
+                //         $alreadyaddad =  $e->getMessage();
+                //     }
+                // }
                 
                 
                 
-            ?>
+            ?> -->
             <!-- Reviews Section -->
             <div class="p-6 bg-gray-50 dark:bg-gray-700">
                 <div class="flex justify-between items-center mb-6">
@@ -183,37 +184,10 @@ $pdo = $db->getConnection();
                 <!-- Write a Review Section -->
                 <div class="mt-6 bg-white dark:bg-gray-600 p-6 rounded-lg">
                     <h4 class="text-xl font-semibold mb-4 dark:text-white">Write a Review</h4>
-                        <form  method="POST" action="" class="space-y-4">
-                        <textarea 
-                            name = "description"
-                            class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:text-white" 
-                            rows="4" 
-                            placeholder="Share your experience..."
-                        ></textarea>
-                        <?php if(isset($alreadyaddad)): ?>
-
-                                <script>
-                                    const Toast = Swal.mixin({
-                                    toast: true,
-                                    position: "top-end",
-                                    showConfirmButton: false,
-                                    timer: 3000,
-                                    timerProgressBar: true,
-                                    didOpen: (toast) => {
-                                        toast.onmouseenter = Swal.stopTimer;
-                                        toast.onmouseleave = Swal.resumeTimer;
-                                    }
-                                    });
-                                    Toast.fire({
-                                    icon: "info",
-                                    title: "You Have already reviewed This car"
-                                });
-                                </script>
-                        <?php endif ?>
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                            Submit Review
-                        </button>
-                    </form>
+                    <?php
+                        $carId = $detail['id'];
+                        echo ReviewsList::render($pdo, $carId);
+                        ?>
                 </div>
             </div>
         </div>
@@ -359,42 +333,41 @@ $pdo = $db->getConnection();
         </div>
     </div>
     </div>
-
+        <script src="js/reviews.js"></script>
     <script>
 
+// public/js/reservation.js
 function submitReservation(event) {
-    event.preventDefault(); // Prevent default form submission
+    event.preventDefault();
 
     const form = document.getElementById('reservationForm');
     const formData = new FormData(form);
 
-    // Log form data for debugging
-    for (const [key, value] of formData.entries()) {
-        console.log(key + ': ' + value);
-    }
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'helpers/reservation_handler.php', true);
-    
-    xhr.onload = function () {
-        if (xhr.status === 200) {
-            console.log('Reservation successful:', xhr.responseText);
-            alert('Reservation completed successfully!');
+    fetch('helpers/reservation_handler.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message
+            });
+            form.reset();
         } else {
-            console.error('Error occurred:', xhr.statusText);
-            alert('Failed to complete the reservation.');
+            throw new Error(data.message);
         }
-    };
-
-    xhr.onerror = function () {
-        console.error('Request error.');
-        alert('An error occurred while processing the reservation.');
-    };
-
-    xhr.send(formData); // Send the form data
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to complete the reservation.'
+        });
+    });
 }
-
-
 
 const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
@@ -449,7 +422,6 @@ const startDateInput = document.getElementById('startDate');
         // Review Form Submission (Placeholder)
         document.getElementById('reviewForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('Review submission functionality to be implemented');
         });
     </script>
     <?php include('template/footer.php') ?>
