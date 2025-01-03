@@ -19,6 +19,11 @@ class Client extends User {
         if ($stmt->fetchColumn() == 0) {
             throw new \Exception("Car not found");
         }
+        $stmt = $pdo->prepare("SELECT availability FROM cars");
+        $stmt->execute();
+        if($stmt->fetchcolumn()== 'unavailable'){
+            throw new \Exception("You cant Reserve an unavailable car");
+        }
 
         // Validate user exists
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE id = :user_id");
