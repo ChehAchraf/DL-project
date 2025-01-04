@@ -4,7 +4,7 @@ function submitReview(event) {
     const form = document.getElementById('reviewForm');
     const formData = new FormData(form);
 
-    fetch('helpers/review_handler.php', {
+    fetch('../helpers/review_handler.php', {
         method: 'POST',
         body: formData
     })
@@ -91,7 +91,7 @@ function deleteReview(reviewId) {
         confirmButtonText: 'Yes, delete it!'
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch('helpers/review_handler.php', {
+            fetch('../helpers/review_handler.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

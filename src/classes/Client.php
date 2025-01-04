@@ -3,11 +3,12 @@
 namespace Classes;
 use Classes\User;
 use Classes\Session;
+Session::validateSession();
 
 class Client extends User {
     protected $userid;
 
-    public function __construct($name, $secname, $email, $password) {
+    public function __construct($name, $secname, $email, $password, $userid) {
         parent::__construct($name, $secname, $email, $password);
         $this->userid = Session::validateSession(); 
     }
@@ -87,25 +88,25 @@ class Client extends User {
         return "Review added successfully";
     }
 
-public function EditReview($pdo, $reviewId, $comment) {
-    $stmt = $pdo->prepare("
-        UPDATE reviews 
-        SET comment = :comment 
-        WHERE id = :review_id AND user_id = :user_id AND is_deleted = FALSE
-    ");
-    
-    $result = $stmt->execute([
-        'comment' => $comment,
-        'review_id' => $reviewId,
-        'user_id' => $this->userid
-    ]);
+    public function EditReview($pdo, $reviewId, $comment) {
+        $stmt = $pdo->prepare("
+            UPDATE reviews 
+            SET comment = :comment 
+            WHERE id = :review_id AND user_id = :user_id AND is_deleted = FALSE
+        ");
+        
+        $result = $stmt->execute([
+            'comment' => $comment,
+            'review_id' => $reviewId,
+            'user_id' => $this->userid
+        ]);
 
-    if (!$result) {
-        throw new \Exception("Failed to update review");
+        if (!$result) {
+            throw new \Exception("Failed to update review");
+        }
+
+        return "Review updated successfully";
     }
-
-    return "Review updated successfully";
-}
 
     public function DeleteReview($pdo, $reviewId) {
         $stmt = $pdo->prepare("
@@ -125,5 +126,50 @@ public function EditReview($pdo, $reviewId, $comment) {
 
         return "Review deleted successfully";
     }
-
+    
+    public function getuserinformation($pdo,$uderid) {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :user_id");
+        $stmt->execute(['user_id' => $uderid]); 
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+    public function getreservationinformation($pdo,$userid) {
+        $stmt = $pdo->prepare("SELECT 
+                    reservations.start_date, 
+                    reservations.end_date, 
+                    reservations.id,
+                    reservations.pickup_location, 
+                    reservations.return_location,  
+                    reservations.status, 
+                    cars.model AS car_model, 
+                    users.name AS user_name
+                FROM 
+                    reservations
+                INNER JOIN 
+                    cars ON reservations.car_id = cars.id
+                INNER JOIN 
+                    users ON reservations.user_id = users.id
+                WHERE 
+                    users.id = :user_id;"); 
+        $stmt->execute(['user_id' => $userid]); 
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    public function getuserreviews($pdo,$userid) {
+        $stmt = $pdo->prepare("SELECT 
+                    reviews.id,
+                    reviews.comment, 
+                    reviews.rating,
+                    reviews.created_at, 
+                    cars.model AS car_model, 
+                    users.name AS user_name
+                FROM 
+                    reviews
+                INNER JOIN 
+                    cars ON reviews.car_id = cars.id
+                INNER JOIN 
+                    users ON reviews.user_id = users.id
+                WHERE 
+                    users.id = :user_id;"); 
+        $stmt->execute(['user_id' => $userid]); 
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }
