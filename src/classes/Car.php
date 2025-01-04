@@ -180,6 +180,53 @@ class Car {
         }
     }
 
+    public static function updateCar($pdo, $carId, $data) {
+        try {
+            $sql = "UPDATE cars SET 
+                    model = :model,
+                    price = :price,
+                    availability = :availability,
+                    category_id = :category_id,
+                    mileage = :mileage,
+                    year = :year,
+                    fuel_type = :fuel_type,
+                    transmission = :transmission,
+                    description = :description
+                    WHERE id = :id";
+                    
+            $stmt = $pdo->prepare($sql);
+            
+            $stmt->bindValue(':id', $carId);
+            $stmt->bindValue(':model', $data['model']);
+            $stmt->bindValue(':price', $data['price']);
+            $stmt->bindValue(':availability', $data['availability']);
+            $stmt->bindValue(':category_id', $data['category_id']);
+            $stmt->bindValue(':mileage', $data['mileage']);
+            $stmt->bindValue(':year', $data['year']);
+            $stmt->bindValue(':fuel_type', $data['fuel_type']);
+            $stmt->bindValue(':transmission', $data['transmission']);
+            $stmt->bindValue(':description', $data['description']);
+            
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            throw new Exception("Failed to update car: " . $e->getMessage());
+        }
+    }
+    
+    public static function getCar($pdo, $carId) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT c.*, cat.name as category_name 
+                FROM cars c
+                LEFT JOIN categories cat ON c.category_id = cat.id
+                WHERE c.id = :id
+            ");
+            $stmt->execute(['id' => $carId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Failed to fetch car: " . $e->getMessage());
+        }
+    }
     
     
 }

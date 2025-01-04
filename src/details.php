@@ -1,6 +1,7 @@
 <?php
 session_start();
 echo $_SESSION['id'];
+echo $_SESSION['role'];
 // import the autoLoad
 require __DIR__ . '/../vendor/autoload.php'; 
 

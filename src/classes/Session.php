@@ -7,7 +7,7 @@ class Session {
             session_start();
         }
         
-        if (!isset($_SESSION['id'])) {
+        if (!isset($_SESSION['id']) || !isset($_SESSION['role']) ) {
             throw new \Exception("User not logged in");
         }
         

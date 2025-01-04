@@ -8,7 +8,7 @@ use Helpers\Database;
 use Classes\User;
 ?>
 
-<?php include('template/header.php') ?>
+<?php  echo $_SESSION['role']; include('template/header.php'); ?>
 <?php include('template/hero.php') ?>
 
 

@@ -7,8 +7,17 @@ use Helpers\Database;
 use Classes\Car;
 use Classes\User;
 use Classes\Admin;
-
-
+use Classes\Session;
+Session::validateSession();
+if(isset($_SESSION['role']) && $_SESSION['role'] == "admin"){
+    try {
+        $db = new Database();
+        $pdo = $db->getConnection();
+        $cars = Car::getAllCarsWithCategories($pdo);
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+        exit;
+    }
 include('../template/header.php') 
 ?>
     <script>
@@ -219,51 +228,153 @@ include('../template/header.php')
         ?>
         <!-- Manage Cars Tab -->
         <div id="carsTab">
-            <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Manage Cars</h2>
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-100 dark:bg-gray-900">
-                            <th class="p-4 text-left">ID</th>
-                            <th class="p-4 text-left">Model</th>
-                            <th class="p-4 text-left">Category</th>
-                            <th class="p-4 text-left">Daily Rate</th>
-                            <th class="p-4 text-left">Status</th>
-                            <th class="p-4 text-left">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($cars as $car): ?>
-                        <tr class="border-b dark:border-gray-700" id="car-row-<?php echo $car['id']; ?>">
-                            <td class="p-4">CAR-<?php echo str_pad($car['id'], 3, '0', STR_PAD_LEFT); ?></td>
-                            <td class="p-4"><?php echo htmlspecialchars($car['model']); ?></td>
-                            <td class="p-4"><?php echo htmlspecialchars($car['category_name']); ?></td>
-                            <td class="p-4">$<?php echo number_format($car['price'], 2); ?>/day</td>
-                            <td class="p-4">
-                                <span class="px-2 py-1 rounded-full text-xs <?php echo $car['availability'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
-                                    <?php echo $car['availability'] ? 'Available' : 'Not Available'; ?>
-                                </span>
-                            </td>
-                            <td class="p-4">
-                                <div class="flex space-x-2">
-                                    <button class="text-blue-500 hover:text-blue-700" title="Edit Car">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button 
-                                        class="text-red-500 hover:text-red-700" 
-                                        title="Delete Car" 
-                                        onclick="deleteCar(<?php echo $car['id']; ?>)"
-                                    >
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Manage Cars</h2>
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-100 dark:bg-gray-900">
+                        <th class="p-4 text-left">ID</th>
+                        <th class="p-4 text-left">Model</th>
+                        <th class="p-4 text-left">Category</th>
+                        <th class="p-4 text-left">Daily Rate</th>
+                        <th class="p-4 text-left">Status</th>
+                        <th class="p-4 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($cars as $car): ?>
+                    <tr class="border-b dark:border-gray-700" id="car-row-<?php echo $car['id']; ?>">
+                        <td class="p-4">CAR-<?php echo str_pad($car['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                        <td class="p-4"><?php echo htmlspecialchars($car['model']); ?></td>
+                        <td class="p-4"><?php echo htmlspecialchars($car['category_name']); ?></td>
+                        <td class="p-4">$<?php echo number_format($car['price'], 2); ?>/day</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded-full text-xs <?php echo $car['availability'] === 'available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
+                                <?php echo ucfirst($car['availability']); ?>
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex space-x-2">
+                                <button 
+                                    onclick="openEditModal(<?php echo $car['id']; ?>)" 
+                                    class="text-blue-500 hover:text-blue-700" 
+                                    title="Edit Car"
+                                >
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button 
+                                    onclick="deleteCar(<?php echo $car['id']; ?>)"
+                                    class="text-red-500 hover:text-red-700" 
+                                    title="Delete Car"
+                                >
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
+    </div>
+    <div id="editCarModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Edit Car</h3>
+            <form id="editCarForm" onsubmit="updateCar(event)" class="mt-4">
+                <input type="hidden" id="edit-car-id" name="carId">
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-model">
+                        Model
+                    </label>
+                    <input type="text" id="edit-model" name="model" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-price">
+                        Daily Rate
+                    </label>
+                    <input type="number" id="edit-price" name="price" step="0.01" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-category">
+                        Category
+                    </label>
+                    <input type="text" id="edit-category" name="category" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-availability">
+                        Availability
+                    </label>
+                    <select id="edit-availability" name="availability" required
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="available">Available</option>
+                        <option value="unavailable">Not Available</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-mileage">
+                        Mileage
+                    </label>
+                    <input type="number" id="edit-mileage" name="mileage" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-year">
+                        Year
+                    </label>
+                    <input type="number" id="edit-year" name="year" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-fuel-type">
+                        Fuel Type
+                    </label>
+                    <input type="text" id="edit-fuel-type" name="fuel_type" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-transmission">
+                        Transmission
+                    </label>
+                    <input type="text" id="edit-transmission" name="transmission" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="edit-description">
+                        Description
+                    </label>
+                    <textarea id="edit-description" name="description" rows="3"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between mt-4">
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Update Car
+                    </button>
+                    <button type="button"
+                            onclick="document.getElementById('editCarModal').style.display='none'"
+                            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+   
 
 
         <!-- Add New Car Tab -->
@@ -416,16 +527,16 @@ include('../template/header.php')
 
                 <!-- Upload Car Image -->
                 <div class="md:col-span-2">
-        <label for="car_image" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Upload Car Image</label>
-        <input 
-            type="file" 
-            id="car_image"
-            name="car_image"
-            accept="image/*"
-            class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-            required
-        >
-    </div>
+                    <label for="car_image" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Upload Car Image</label>
+                    <input 
+                        type="file" 
+                        id="car_image"
+                        name="car_image"
+                        accept="image/*"
+                        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        required
+                    >
+                </div>
 
                 <!-- Submit Button -->
                 <div class="md:col-span-2">
@@ -656,6 +767,15 @@ function changeReservationStatus(reservationId, newStatus) {
     <!-- Include the JavaScript file -->
 <script src="../js/useractions.js"></script>
 <script src="../js/carAction.js"></script>
+<script type="module">
+        import { deleteCar, openEditModal, updateCar } from '../js/carManagement.js';
+        window.deleteCar = deleteCar;
+        window.openEditModal = openEditModal;
+        window.updateCar = updateCar;
+    </script>
 </body>
 
 </html>
+<?php }else{
+    header("Location: ../index.php");
+} ?>
