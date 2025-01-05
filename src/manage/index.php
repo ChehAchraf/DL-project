@@ -5,6 +5,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 // calling the classes
 use Helpers\Database;
 use Classes\Car;
+use Classes\Review;
 use Classes\User;
 use Classes\Admin;
 use Classes\Session;
@@ -30,14 +31,19 @@ include('../template/header.php')
         // Tab switching
         function switchTab(tabName) {
             // Hide all tabs
-            ['dashboard', 'cars', 'reservations', 'clients', 'add-car'].forEach(tab => {
-                document.getElementById(tab + 'Tab').classList.add('hidden');
-                document.getElementById(tab + 'NavItem').classList.remove('bg-blue-600', 'text-white');
+            const tabs = ['dashboard', 'cars', 'reservations', 'clients', 'add-car', 'reviews', 'categories'];
+            tabs.forEach(tab => {
+                const tabElement = document.getElementById(tab + 'Tab');
+                const navElement = document.getElementById(tab + 'NavItem');
+                if (tabElement) tabElement.classList.add('hidden');
+                if (navElement) navElement.classList.remove('bg-blue-600', 'text-white');
             });
-
+            
             // Show selected tab
-            document.getElementById(tabName + 'Tab').classList.remove('hidden');
-            document.getElementById(tabName + 'NavItem').classList.add('bg-blue-600', 'text-white');
+            const selectedTab = document.getElementById(tabName + 'Tab');
+            const selectedNav = document.getElementById(tabName + 'NavItem');
+            if (selectedTab) selectedTab.classList.remove('hidden');
+            if (selectedNav) selectedNav.classList.add('bg-blue-600', 'text-white');
         }
 
         // Initialize charts
@@ -91,7 +97,7 @@ include('../template/header.php')
         // }
     </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 flex">
+<body class="bg-gray-100 dark:bg-gray-900 flex">    
     <!-- Sidebar Navigation -->
     <div class="w-64 bg-white dark:bg-gray-800 shadow-xl h-screen fixed left-0 top-0 z-40">
         <div class="p-6 border-b dark:border-gray-700">
@@ -142,6 +148,24 @@ include('../template/header.php')
                         class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center"
                     >
                         <i class="fas fa-users mr-3"></i> Clients
+                    </button>
+                </li>
+                <li>
+                    <button 
+                        id="reviewsNavItem"
+                        onclick="switchTab('reviews')" 
+                        class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center"
+                    >
+                        <i class="fas fa-star mr-3"></i> Reviews
+                    </button>
+                </li>
+                <li>
+                    <button 
+                        id="categoriesNavItem"
+                        onclick="switchTab('categories')" 
+                        class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center"
+                    >
+                        <i class="fas fa-list mr-3"></i> Categories
                     </button>
                 </li>
             </ul>
@@ -256,7 +280,7 @@ include('../template/header.php')
                         <td class="p-4">
                             <div class="flex space-x-2">
                                 <button 
-                                    onclick="openEditModal(<?php echo $car['id']; ?>)" 
+                                    onclick="openEditCategoryModal(<?php echo $car['id']; ?>, '<?php echo htmlspecialchars($car['model']); ?>')" 
                                     class="text-blue-500 hover:text-blue-700" 
                                     title="Edit Car"
                                 >
@@ -277,6 +301,49 @@ include('../template/header.php')
             </table>
         </div>
     </div>
+    <!-- Edit Category Modal -->
+<div id="editCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white">Edit Category</h3>
+            <button onclick="closeEditModal()" class="text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <!-- Hidden input for category ID -->
+            <input type="hidden" id="editCategoryId">
+
+            <!-- Input for category name -->
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">Category Name</label>
+                <input 
+                    type="text" 
+                    id="editCategoryName" 
+                    class="w-full px-4 py-2 border rounded focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    placeholder="Enter category name"
+                >
+            </div>
+            
+            <!-- Action buttons -->
+            <div class="flex justify-end space-x-4">
+                <button 
+                    onclick="closeEditModal()"
+                    class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onclick="updateCategory()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                    Update Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
     <div id="editCarModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3">
@@ -373,7 +440,7 @@ include('../template/header.php')
             </form>
         </div>
     </div>
-</div>
+    </div>
    
 
 
@@ -615,97 +682,450 @@ include('../template/header.php')
         </div>
 
         <!-- Clients Tab -->
-        <div id="clientsTab" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Clients Management</h2>
-                <div class="flex items-center space-x-4">
-                    <input 
-                        type="text" 
-                        placeholder="Search clients..." 
-                        class="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                    >
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                        <i class="fas fa-search"></i>
-                    </button>
+            <div id="clientsTab" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Clients Management</h2>
+                    <div class="flex items-center space-x-4">
+                        <input 
+                            type="text" 
+                            placeholder="Search clients..." 
+                            class="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
                 </div>
+                <?php 
+                    try {
+                        $admin = new Admin("","","","");
+                        $users = $admin->listUsers($pdo);
+                    } catch (Exception $e) {
+                        echo "Error: " . $e->getMessage();
+                        exit;
+                    }
+                ?>
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-100 dark:bg-gray-900">
+                                <th class="p-4 text-left">ID</th>
+                                <th class="p-4 text-left">Name</th>
+                                <th class="p-4 text-left">Email</th>
+                                <th class="p-4 text-left">Total Reservations</th>
+                                <th class="p-4 text-left">Registered Date</th>
+                                <th class="p-4 text-left">Role</th>
+                                <th class="p-4 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($users as $user): ?>
+                            <tr class="border-b dark:border-gray-700" id="user-row-<?php echo $user['id']; ?>">
+                                <td class="p-4">CLI-<?php echo str_pad($user['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                <td class="p-4"><?php echo htmlspecialchars($user['name'] . ' ' . $user['s_name']); ?></td>
+                                <td class="p-4"><?php echo htmlspecialchars($user['email']); ?></td>
+                                <td class="p-4">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        3 Reservations
+                                    </span>
+                                </td>
+                                <td class="p-4"><?php echo date('F d, Y', strtotime($user['created_at'])); ?></td>
+                                <td class="p-4">
+                                    <select 
+                                        class="role-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                        onchange="updateRole(<?php echo $user['id']; ?>, this.value)"
+                                        <?php echo $user['role'] === 'admin' ? 'disabled' : ''; ?>
+                                    >
+                                        <option value="client" <?php echo $user['role'] === 'client' ? 'selected' : ''; ?>>Client</option>
+                                        <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                                    </select>
+                                </td>
+                                <td class="p-4">
+                                    <?php if ($user['role'] !== 'admin'): ?>
+                                    <button 
+                                        class="text-red-500 hover:text-red-700" 
+                                        title="Delete User" 
+                                        onclick="deleteUser(<?php echo $user['id']; ?>)"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
             </div>
-            <?php 
-                try {
-                    $admin = new Admin("","","","");
-                    $users = $admin->listUsers($pdo);
-                } catch (Exception $e) {
-                    echo "Error: " . $e->getMessage();
-                    exit;
-                }
-            ?>
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
-    <table class="w-full">
-        <thead>
-            <tr class="bg-gray-100 dark:bg-gray-900">
-                <th class="p-4 text-left">ID</th>
-                <th class="p-4 text-left">Name</th>
-                <th class="p-4 text-left">Email</th>
-                <th class="p-4 text-left">Total Reservations</th>
-                <th class="p-4 text-left">Registered Date</th>
-                <th class="p-4 text-left">Role</th>
-                <th class="p-4 text-left">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($users as $user): ?>
-            <tr class="border-b dark:border-gray-700" id="user-row-<?php echo $user['id']; ?>">
-                <td class="p-4">CLI-<?php echo str_pad($user['id'], 3, '0', STR_PAD_LEFT); ?></td>
-                <td class="p-4"><?php echo htmlspecialchars($user['name'] . ' ' . $user['s_name']); ?></td>
-                <td class="p-4"><?php echo htmlspecialchars($user['email']); ?></td>
-                <td class="p-4">
-                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        3 Reservations
-                    </span>
-                </td>
-                <td class="p-4"><?php echo date('F d, Y', strtotime($user['created_at'])); ?></td>
-                <td class="p-4">
-                    <select 
-                        class="role-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        onchange="updateRole(<?php echo $user['id']; ?>, this.value)"
-                        <?php echo $user['role'] === 'admin' ? 'disabled' : ''; ?>
-                    >
-                        <option value="client" <?php echo $user['role'] === 'client' ? 'selected' : ''; ?>>Client</option>
-                        <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                    </select>
-                </td>
-                <td class="p-4">
-                    <?php if ($user['role'] !== 'admin'): ?>
-                    <button 
-                        class="text-red-500 hover:text-red-700" 
-                        title="Delete User" 
-                        onclick="deleteUser(<?php echo $user['id']; ?>)"
-                    >
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <?php endif; ?>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
+            
+            
 
-            <!-- Pagination -->
-            <div class="flex justify-between items-center mt-6">
-                <p class="text-gray-600 dark:text-gray-400">
-                    Showing 1-10 of 50 clients
-                </p>
-                <div class="flex space-x-2">
-                    <button class="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                        Previous
-                    </button>
-                    <button class="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                        Next
-                    </button>
-                </div>
+        </div>
+        <!-- Reviews Tab -->
+    <div id="reviewsTab" class="hidden">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Reviews Management</h2>
+        <div class="flex items-center space-x-4">
+            <input 
+                type="text" 
+                placeholder="Search reviews..." 
+                class="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            >
+            <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <?php
+    try {
+        // Fetch reviews from the database using the listReviews method
+        $db = new Database();
+        $pdo = $db->getConnection();
+        $reviews = Review::listReviews($pdo); // Use the listReviews method
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+        exit;
+    }
+    ?>
+
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-900">
+                    <th class="p-4 text-left">Review ID</th>
+                    <th class="p-4 text-left">Client</th>
+                    <th class="p-4 text-left">Car</th>
+                    <th class="p-4 text-left">Rating</th>
+                    <th class="p-4 text-left">Comment</th>
+                    <th class="p-4 text-left">Date</th>
+                    <th class="p-4 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($reviews)) : ?>
+                    <?php foreach ($reviews as $review) : ?>
+                        <tr class="border-b dark:border-gray-700" data-review-id="<?php echo $review['id']; ?>">
+                            <td class="p-4">REV-<?php echo str_pad($review['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                            <td class="p-4" data-client-name="<?php echo htmlspecialchars($review['name'] . ' ' . $review['s_name']); ?>">
+                                <?php echo htmlspecialchars($review['name'] . ' ' . $review['s_name']); ?>
+                            </td>
+                            <td class="p-4" data-car-model="<?php echo htmlspecialchars($review['model']); ?>">
+                                <?php echo htmlspecialchars($review['model']); ?>
+                            </td>
+                            <td class="p-4" data-rating="<?php echo $review['rating']; ?>">
+                                <div class="flex items-center">
+                                    <?php for ($i = 0; $i < $review['rating']; $i++) : ?>
+                                        <i class="fas fa-star text-yellow-400"></i>
+                                    <?php endfor; ?>
+                                    <?php for ($i = $review['rating']; $i < 5; $i++) : ?>
+                                        <i class="fas fa-star text-gray-300"></i>
+                                    <?php endfor; ?>
+                                </div>
+                            </td>
+                            <td class="p-4" data-comment="<?php echo htmlspecialchars($review['comment']); ?>">
+                                <?php echo htmlspecialchars($review['comment']); ?>
+                            </td>
+                            <td class="p-4" data-date="<?php echo date('F d, Y', strtotime($review['created_at'])); ?>">
+                                <?php echo date('F d, Y', strtotime($review['created_at'])); ?>
+                            </td>
+                            <td class="p-4">
+                                <button 
+                                    class="text-blue-500 hover:text-blue-700 mr-2" 
+                                    title="View Details"
+                                    onclick="viewReviewDetails(<?php echo $review['id']; ?>)"
+                                >
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <?php if($review['is_deleted'] == 0): ?>
+                                <button 
+                                    class="text-red-500 hover:text-red-700" 
+                                    title="Delete Review"
+                                    onclick="deleteReview(<?php echo $review['id']; ?>)"
+                                >
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <?php endif; ?>
+                                <?php if($review['is_deleted'] == 1): ?>
+                                <button 
+                                    class="text-green-500 hover:text-green-700" 
+                                    title="Restore Review"
+                                    onclick="restoreReview(<?php echo $review['id']; ?>)"
+                                >
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <tr>
+                        <td colspan="7" class="p-4 text-center">No reviews found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    </div>
+<div id="addCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white">Add New Category</h3>
+            <button onclick="document.getElementById('addCategoryModal').classList.add('hidden')" class="text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">Category Name</label>
+                <input 
+                    id="categoryNameInput"
+                    type="text" 
+                    class="w-full px-4 py-2 border rounded focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    placeholder="Enter category name"
+                >
+            </div>
+            
+            <div class="flex justify-end space-x-4">
+                <button 
+                    onclick="document.getElementById('addCategoryModal').classList.add('hidden')"
+                    class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onclick="addcategory()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                    Add Category
+                </button>
             </div>
         </div>
     </div>
+</div>
+<!-- Modal for Review Details -->
+<div id="reviewDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Review Details</h2>
+            <button onclick="document.getElementById('reviewDetailsModal').classList.add('hidden')" class="text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-gray-600 dark:text-gray-300 mb-2">Client Name</label>
+                <input 
+                    type="text" 
+                    id="reviewClientName" 
+                    readonly 
+                    class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                >
+            </div>
+            <div>
+                <label class="block text-gray-600 dark:text-gray-300 mb-2">Car Model</label>
+                <input 
+                    type="text" 
+                    id="reviewCarModel" 
+                    readonly 
+                    class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                >
+            </div>
+            <div>
+                <label class="block text-gray-600 dark:text-gray-300 mb-2">Rating</label>
+                <div id="reviewRating" class="flex items-center"></div>
+            </div>
+            <div>
+                <label class="block text-gray-600 dark:text-gray-300 mb-2">Comment</label>
+                <textarea 
+                    id="reviewComment" 
+                    readonly 
+                    class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                    rows="3"
+                ></textarea>
+            </div>
+            <div>
+                <label class="block text-gray-600 dark:text-gray-300 mb-2">Date</label>
+                <input 
+                    type="text" 
+                    id="reviewDate" 
+                    readonly 
+                    class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                >
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Categories Tab -->
+<div id="categoriesTab" class="hidden">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Categories Management</h2>
+        <button onclick="document.getElementById('addCategoryModal').classList.remove('hidden')" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <i class="fas fa-plus mr-2"></i>Add Category
+        </button>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-50 dark:bg-gray-700">
+                    <th class="p-4 text-left">ID</th>
+                    <th class="p-4 text-left">Name</th>
+                    <th class="p-4 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($categories as $category): ?>
+                    <tr class="border-b dark:border-gray-700">
+                        <td class="p-4"><?= $category['id'] ?></td>
+                        <td class="p-4"><?= htmlspecialchars($category['name']) ?></td>
+                        <td class="p-4">
+                            <button onclick="openEditCategoryModal(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>')" class="text-blue-500 hover:text-blue-700 mr-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCategory(<?= $category['id'] ?>)" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+function viewReviewDetails(reviewId) {
+    // Find the review data from the table row
+    const row = document.querySelector(`tr[data-review-id="${reviewId}"]`);
+    if (!row) return;
+
+    // Get the modal
+    const modal = document.getElementById('reviewDetailsModal');
+    if (!modal) return;
+
+    // Get the data from the row
+    const clientName = row.querySelector('[data-client-name]').getAttribute('data-client-name');
+    const carModel = row.querySelector('[data-car-model]').getAttribute('data-car-model');
+    const rating = parseInt(row.querySelector('[data-rating]').getAttribute('data-rating'));
+    const comment = row.querySelector('[data-comment]').getAttribute('data-comment');
+    const date = row.querySelector('[data-date]').getAttribute('data-date');
+
+    // Populate the modal
+    document.getElementById('reviewClientName').value = clientName;
+    document.getElementById('reviewCarModel').value = carModel;
+    
+    // Update rating stars
+    const ratingDiv = document.getElementById('reviewRating');
+    ratingDiv.innerHTML = Array(5).fill(0).map((_, i) => 
+        `<i class="fas fa-star ${i < rating ? 'text-yellow-400' : 'text-gray-300'}"></i>`
+    ).join('');
+    
+    document.getElementById('reviewComment').value = comment;
+    document.getElementById('reviewDate').value = date;
+
+    // Show the modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function validateCategoryName(name) {
+    return name.trim() !== ''; // Check if the input is not just spaces
+}
+function deleteCategory(categoryId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You are about to delete this category. This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "../helpers/delete_category.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.send("category_id=" + encodeURIComponent(categoryId));
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Category deleted successfully!',
+                        }).then(() => {
+                            location.reload(); // Reload the page to reflect the deleted category
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed',
+                            text: 'Failed to delete category: ' + response.error,
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while deleting the category.',
+                    });
+                }
+            };
+        }
+    });
+}
+// Function to add a category
+function addcategory() {
+    var name = document.getElementById('categoryNameInput').value;
+
+    // Validate the category name
+    if (!validateCategoryName(name)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid Input',
+            text: 'Category name cannot be empty or just spaces.',
+        });
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "../helpers/add_category.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.send("name=" + encodeURIComponent(name));
+
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Category added successfully!',
+                }).then(() => {
+                    closeModal(); // Close the modal
+                    location.reload(); // Reload the page to reflect the new category
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed',
+                    text: 'Failed to add category: ' + response.error,
+                });
+            }
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while adding the category.',
+            });
+        }
+    };
+}
+</script>
 
     <!-- Modal for Client Details (can be dynamically populated) -->
     <div id="clientDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
@@ -764,18 +1184,69 @@ function changeReservationStatus(reservationId, newStatus) {
 
 
     </script>
-    <!-- Include the JavaScript file -->
-<script src="../js/useractions.js"></script>
-<script src="../js/carAction.js"></script>
-<script type="module">
+    <!-- Include the JavaScript files -->
+    <script src="../js/useractions.js"></script>
+    <script src="../js/carAction.js"></script>
+    <script src="../js/reviews.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module">
         import { deleteCar, openEditModal, updateCar } from '../js/carManagement.js';
         window.deleteCar = deleteCar;
         window.openEditModal = openEditModal;
         window.updateCar = updateCar;
+
+        // Move the viewReviewDetails function here
+        window.viewReviewDetails = function(reviewId) {
+            // Find the review data from the table row
+            const row = document.querySelector(`tr[data-review-id="${reviewId}"]`);
+            if (!row) return;
+
+            // Get the modal
+            const modal = document.getElementById('reviewDetailsModal');
+            if (!modal) return;
+
+            // Get the data from the row
+            const clientName = row.querySelector('[data-client-name]').getAttribute('data-client-name');
+            const carModel = row.querySelector('[data-car-model]').getAttribute('data-car-model');
+            const rating = parseInt(row.querySelector('[data-rating]').getAttribute('data-rating'));
+            const comment = row.querySelector('[data-comment]').getAttribute('data-comment');
+            const date = row.querySelector('[data-date]').getAttribute('data-date');
+
+            // Populate the modal
+            document.getElementById('reviewClientName').value = clientName;
+            document.getElementById('reviewCarModel').value = carModel;
+            
+            // Update rating stars
+            const ratingDiv = document.getElementById('reviewRating');
+            ratingDiv.innerHTML = Array(5).fill(0).map((_, i) => 
+                `<i class="fas fa-star ${i < rating ? 'text-yellow-400' : 'text-gray-300'}"></i>`
+            ).join('');
+            
+            document.getElementById('reviewComment').value = comment;
+            document.getElementById('reviewDate').value = date;
+
+            // Show the modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
     </script>
+<!-- Add Category Modal -->
+
+<script src="../js/cate.js"></script>
 </body>
 
 </html>
-<?php }else{
+
+
+<?php 
+    $categories = $admin->listCategories($pdo);
+?>
+
+
+
+<?php
+}else{
     header("Location: ../index.php");
-} ?>
+    exit();
+}
+?>

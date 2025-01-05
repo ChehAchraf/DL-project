@@ -99,4 +99,42 @@ class Review {
         $stmt->execute(['car_id' => $carId]);
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
+
+    public static function restoreReview($pdo, $reviewId) {
+        $stmt = $pdo->prepare("
+            UPDATE reviews 
+            SET is_deleted = FALSE 
+            WHERE id = :review_id
+        ");
+        
+        $stmt->execute(['review_id' => $reviewId]);
+        
+        if ($stmt->rowCount() === 0) {
+            throw new \Exception("Review not found or already restored");
+        }
+        
+        return true;
+    }
+
+    public static function listReviews($pdo) {
+        $stmt = $pdo->prepare("
+            SELECT 
+                r.id,
+                r.user_id,
+                r.car_id,
+                r.comment,
+                r.rating,
+                r.created_at,
+                r.is_deleted,
+                u.name,
+                u.s_name,
+                c.model
+            FROM reviews r
+            JOIN users u ON r.user_id = u.id
+            JOIN cars c ON r.car_id = c.id
+            ORDER BY r.created_at DESC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

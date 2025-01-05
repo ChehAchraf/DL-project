@@ -1,4 +1,3 @@
--- SQL script to create the necessary tables for the car rental system
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (

@@ -16,7 +16,7 @@ class Car {
     private $transmission;
     private $description;
     private $imgPath;
-    protected $lignes_par_page = 2;
+    protected $lignes_par_page = 12;
 
     public function __construct($model, $price, $availability, $categoryId, $mileage, $year, $fuelType, $transmission, $description, $imgPath = null) {
         $this->model = $model;
@@ -90,9 +90,12 @@ class Car {
         return $result['total'];
     }
     
-    public  function getAllCars($pdo, $page = 1) {
+    public  function getAllCars($pdo, $page = 5) {
         $offset = ($page - 1) * $this->lignes_par_page;
-        $query = $pdo->prepare("SELECT * FROM cars LIMIT :offset, :limit");
+        $query = $pdo->prepare("SELECT cars.*, categories.name AS category_name 
+        FROM cars 
+        INNER JOIN categories ON cars.category_id = categories.id 
+        LIMIT :offset, :limit");
         $query->bindParam(':offset', $offset, PDO::PARAM_INT);
         $query->bindParam(':limit', var: $this->lignes_par_page, type: PDO::PARAM_INT);
         $query->execute();
@@ -164,8 +167,6 @@ class Car {
             throw new Exception("Failed to delete car: " . $e->getMessage());
         }
     }
-
-    // Add this to get all cars with category names
     public static function getAllCarsWithCategories($pdo) {
         try {
             $stmt = $pdo->query("

@@ -128,3 +128,40 @@ function deleteReview(reviewId) {
         }
     });
 }
+
+function restoreReview(reviewId) {
+    fetch('../helpers/review_handler.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=restore&review_id=${reviewId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Restored!',
+                text: 'Your review has been restored.',
+                confirmButtonColor: '#3085d6'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({            
+                icon: 'error',
+                title: 'Oops...',
+                text: data.message || 'Failed to restore review'
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while restoring the review'
+        }); 
+        console.error('Error:', error);
+    });
+}

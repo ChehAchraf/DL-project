@@ -156,7 +156,7 @@
                         </button>
                         <!-- Dropdown Menu -->
                         <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-50 hidden">
-                            <a href="profile.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                            <a href="./profile/index.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 Profile
                             </a>
                             <form method="POST" action="helpers/logout_handler.php">

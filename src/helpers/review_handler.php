@@ -8,6 +8,7 @@ session_start();
 use Helpers\Database;
 use Classes\Client;
 use Classes\Session;
+use Classes\Review;
 
 Session::validateSession();
 
@@ -48,7 +49,15 @@ try {
             $result = $client->DeleteReview($pdo, $review_id);
             echo json_encode(['success' => true, 'message' => $result]);
             break;
-
+        case 'restore':
+            $review_id = $_POST['review_id'] ?? null;
+            if (!$review_id) {
+                throw new Exception('Review ID is required');
+            }
+            
+            $result = Review::restoreReview($pdo, $review_id);
+            echo json_encode(['success' => true, 'message' => 'Review restored successfully']);
+            break;
         default:
             throw new Exception('Invalid action');
     }

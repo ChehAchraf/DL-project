@@ -172,4 +172,21 @@ class Client extends User {
         $stmt->execute(['user_id' => $userid]); 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+    public function restoreReview($pdo, $reviewId) {
+        $stmt = $pdo->prepare("
+            UPDATE reviews 
+            SET is_deleted = FALSE 
+            WHERE id = :review_id
+        ");
+        
+        $result = $stmt->execute([
+            'review_id' => $reviewId
+        ]);
+
+        if (!$result) {
+            throw new \Exception("Failed to restore review");
+        }
+
+        return "Review restored successfully";
+    }
 }

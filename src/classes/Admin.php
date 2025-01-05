@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace Classes;
 use Classes\User;
 use PDO;
@@ -64,6 +64,7 @@ class Admin extends User {
             throw new Exception("Failed to update user role: " . $e->getMessage());
         }
     }
+
     public static function ReservationHandling($pdo){
         
         try {
@@ -97,6 +98,7 @@ class Admin extends User {
             return [];
         }
     }
+    
     public function EditStatus($pdo, $res_id, $res_status) {
         if (isset($res_id) && isset($res_status)) {
             // تحقق من أن القيمة التي تم إرسالها هي واحدة من الحالات المعتمدة
@@ -121,6 +123,42 @@ class Admin extends User {
         }
     }
     
-    
-    
+    public function createcategory($pdo, $name) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO categories (name) VALUES (:name)");
+            $stmt->execute(['name' => $name]);
+            return "Category created successfully.";
+        } catch (PDOException $e) {
+            throw new Exception("Failed to create category: " . $e->getMessage());
+        }
+    }
+    public function listCategories($pdo) {
+        try {
+            $stmt = $pdo->query("SELECT id, name FROM categories");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Failed to fetch categories: " . $e->getMessage());
+        }
+    }
+    public function deleteCategory($pdo, $categoryId) {
+        try {
+            $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
+            return $stmt->execute([$categoryId]);
+        } catch (PDOException $e) {
+            throw new Exception("Failed to delete category: " . $e->getMessage());
+        }
+    }
+
+    public function updateCategory($pdo, $categoryId, $categoryName) {
+        try {
+            $stmt = $pdo->prepare("UPDATE categories SET name = :name WHERE id = :id");
+            return $stmt->execute([
+                ':name' => $categoryName,
+                ':id' => $categoryId
+            ]);
+        } catch (PDOException $e) {
+            error_log("Error updating category: " . $e->getMessage());
+            return false;
+        }
+    }
 }
