@@ -66,13 +66,20 @@ try {
         case 'add':
             $title = $_POST['title'] ?? '';
             $content = $_POST['content'] ?? '';
+            $category_id = $_POST['category_id'] ?? null;
             
             if (empty($title) || empty($content)) {
                 handleError('Title and content are required');
             }
             
             try {
-                $response = $article->CreatePost($pdo, $title, $content, $_FILES['image'] ?? null);
+                $response = $article->CreatePost(
+                    $pdo, 
+                    $title, 
+                    $content, 
+                    $_FILES['image'] ?? null,
+                    $category_id
+                );
                 sendJsonResponse([
                     'success' => true,
                     'message' => $response
@@ -81,7 +88,24 @@ try {
                 handleError('Create post error: ' . $e->getMessage());
             }
             break;
+        
+        case 'delete':
+            $articleId = $_POST['article_id'] ?? '';
             
+            if (empty($articleId)) {
+                handleError('Article ID is required');
+            }
+            
+            try {
+                $response = $article->DeleteArticle($pdo, $articleId);
+                sendJsonResponse([
+                    'success' => true,
+                    'message' => $response
+                ]);
+            } catch (\Exception $e) {
+                handleError('Delete article error: ' . $e->getMessage());
+            }
+            break;
         default:
             handleError('Invalid action');
     }

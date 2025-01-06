@@ -11,7 +11,7 @@ class Article {
         $this->user_id = $user_id;
     }
 
-    public function CreatePost($pdo, $title, $content, $imageFile) {
+    public function CreatePost($pdo, $title, $content, $imageFile, $category_id = null) {
         try {
             // Validate inputs
             if (empty($title) || empty($content)) {
@@ -22,6 +22,15 @@ class Article {
                 throw new \Exception("User ID is required.");
             }
 
+            // Validate category if provided
+            if ($category_id) {
+                $stmt = $pdo->prepare("SELECT id FROM category_blog WHERE id = :id");
+                $stmt->execute(['id' => $category_id]);
+                if (!$stmt->fetch()) {
+                    throw new \Exception("Invalid category selected");
+                }
+            }
+
             // Validate and upload the image if provided
             $imagePath = null;
             if (isset($imageFile) && $imageFile['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -30,15 +39,16 @@ class Article {
 
             // Insert the article into the database
             $stmt = $pdo->prepare("
-                INSERT INTO articles (title, content, image, user_id) 
-                VALUES (:title, :content, :image, :user_id)
+                INSERT INTO articles (title, content, image, user_id, category_id) 
+                VALUES (:title, :content, :image, :user_id, :category_id)
             ");
             
             $params = [
                 'title' => $title,
                 'content' => $content,
                 'image' => $imagePath,
-                'user_id' => $this->user_id
+                'user_id' => $this->user_id,
+                'category_id' => $category_id
             ];
 
             if (!$stmt->execute($params)) {
@@ -116,5 +126,36 @@ class Article {
         } catch (\PDOException $e) {
             throw new \Exception("Failed to fetch articles: " . $e->getMessage());
         }
-    }   
+    }
+    public function DeleteArticle($pdo, $ArticleId) {
+        try {
+            // Validate article ownership
+            $stmt = $pdo->prepare('SELECT user_id FROM articles WHERE id = :id');
+            $stmt->execute(['id' => $ArticleId]);
+            $article = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$article) {
+                throw new \Exception("Article not found");
+            }
+
+            if ($article['user_id'] != $this->user_id) {
+                throw new \Exception("You don't have permission to delete this article");
+            }
+
+            // Delete the article
+            $stmt = $pdo->prepare('DELETE FROM articles WHERE id = :id AND user_id = :user_id');
+            $result = $stmt->execute([
+                'id' => $ArticleId,
+                'user_id' => $this->user_id
+            ]);
+
+            if (!$result) {
+                throw new \Exception("Failed to delete article");
+            }
+
+            return "Article deleted successfully";
+        } catch (\PDOException $e) {
+            throw new \Exception("Database error: " . $e->getMessage());
+        }
+    }
 }

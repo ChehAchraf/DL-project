@@ -6,7 +6,7 @@ use PDO;
 use PDOException;
 use Exception;
 
-class BlogCategory{
+class BlogCategory {
     public $id;
     public $name;
     public $description;
@@ -21,14 +21,45 @@ class BlogCategory{
 
     public static function listCategories($pdo) {
         try {
-            $stmt = $pdo->query("
+            // Check if the table exists
+            $stmt = $pdo->query("SHOW TABLES LIKE 'category_blog'");
+            if (!$stmt->fetch()) {
+                throw new Exception("Categories table does not exist");
+            }
+
+            $stmt = $pdo->prepare("
                 SELECT id, name, description, created_at 
-                FROM blog_categories 
+                FROM category_blog 
                 ORDER BY created_at DESC
             ");
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to execute query");
+            }
+
+            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (empty($categories)) {
+                // If no categories exist, create a default one
+                $stmt = $pdo->prepare("
+                    INSERT INTO category_blog (name, description) 
+                    VALUES ('General', 'General category for articles')
+                ");
+                $stmt->execute();
+                
+                // Fetch categories again
+                $stmt = $pdo->prepare("
+                    SELECT id, name, description, created_at 
+                    FROM category_blog 
+                    ORDER BY created_at DESC
+                ");
+                $stmt->execute();
+                $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            return $categories;
         } catch (PDOException $e) {
-            throw new Exception("Failed to fetch categories: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
         }
     }
     
@@ -36,7 +67,7 @@ class BlogCategory{
         try {
             $stmt = $pdo->prepare("
                 SELECT id, name, description, created_at 
-                FROM blog_categories 
+                FROM category_blog 
                 WHERE id = :id
             ");
             $stmt->execute(['id' => $id]);

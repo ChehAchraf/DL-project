@@ -9,6 +9,7 @@
     use Classes\Admin;
     use Classes\Session;
     use Classes\Article;
+    use Classes\BlogCategory;
     Session::validateSession();
     $db = new Database();
     $pdo = $db->getConnection();
@@ -215,7 +216,7 @@ include('../template/header.php');
                                 <!-- Article Image -->
                                 <div class="relative h-48 bg-gray-200">
                                     <?php if ($article['image']): ?>
-                                        <img src="../<?php echo htmlspecialchars($article['image']); ?>" 
+                                        <img src="../../<?php echo htmlspecialchars($article['image']); ?>" 
                                              alt="<?php echo htmlspecialchars($article['title']); ?>" 
                                              class="w-full h-full object-cover">
                                     <?php else: ?>
@@ -255,7 +256,7 @@ include('../template/header.php');
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                 </svg>
                                             </button>
-                                            <button onclick="deleteArticle(<?php echo $article['id']; ?>)" 
+                                            <button onclick="DeleteArticle(<?php echo $article['id']; ?>)" 
                                                     class="text-red-500 hover:text-red-600 dark:text-red-400">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -323,6 +324,33 @@ include('../template/header.php');
                                 placeholder="Write your article content here"
                             ></textarea>
                         </div>
+                        <!-- Category Select Input -->
+                        <?php 
+                        try {
+                            $category = new BlogCategory("","","","");
+                            $categories = $category::listCategories($pdo);
+                        ?>
+                        <div>
+                            <label for="category_id" class="block text-sm font-medium text-gray-700">Category</label>
+                            <select
+                                id="category_id"
+                                name="category_id"
+                                required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Select a category</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo htmlspecialchars($cat['id']); ?>">
+                                        <?php echo htmlspecialchars($cat['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php 
+                        } catch (Exception $e) {
+                            echo '<div class="text-red-500 text-sm mt-1">Error loading categories: ' . htmlspecialchars($e->getMessage()) . '</div>';
+                        }
+                        ?>
                         <!-- Image Upload -->
                         <div>
                             <label for="image" class="block text-sm font-medium text-gray-700">Upload Image</label>
