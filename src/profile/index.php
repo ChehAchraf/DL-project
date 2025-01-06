@@ -8,6 +8,7 @@
     use Classes\Client;
     use Classes\Admin;
     use Classes\Session;
+    use Classes\Article;
     Session::validateSession();
     $db = new Database();
     $pdo = $db->getConnection();
@@ -60,6 +61,22 @@ include('../template/header.php');
                            class="dashboard-tab flex items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition">
                             <i class="fas fa-car mr-3 text-green-500"></i>
                             Reservations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" 
+                           data-tab="articles" 
+                           class="dashboard-tab flex items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition">
+                            <i class="fas fa-newspaper mr-3 text-red-500"></i>
+                            my articles
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" 
+                           data-tab="addarticles" 
+                           class="dashboard-tab flex items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition">
+                            <i class="fas fa-newspaper mr-3 text-red-500"></i>
+                            Add Article
                         </a>
                     </li>
                     <li>
@@ -176,6 +193,162 @@ include('../template/header.php');
                 </div>
             </div>
 
+            <div id="articlesTab" class="dashboard-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold dark:text-white">My Articles</h1>
+                    <button onclick="window.location.href='#addarticlesTab'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add New Article
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <?php
+                    try {
+                        $articles = new Article("", $_SESSION['id']);
+                        $userArticles = $articles->getAllArticles($pdo);
+                        
+                        foreach ($userArticles as $article) {
+                            ?>
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                                <!-- Article Image -->
+                                <div class="relative h-48 bg-gray-200">
+                                    <?php if ($article['image']): ?>
+                                        <img src="../<?php echo htmlspecialchars($article['image']); ?>" 
+                                             alt="<?php echo htmlspecialchars($article['title']); ?>" 
+                                             class="w-full h-full object-cover">
+                                    <?php else: ?>
+                                        <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="absolute top-2 right-2">
+                                        <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                            <?php echo htmlspecialchars($article['category_name'] ?? 'Uncategorized'); ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Article Content -->
+                                <div class="p-6">
+                                    <h2 class="text-xl font-semibold mb-2 dark:text-white">
+                                        <?php echo htmlspecialchars($article['title']); ?>
+                                    </h2>
+                                    <p class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
+                                        <?php echo htmlspecialchars(substr($article['content'], 0, 150)) . '...'; ?>
+                                    </p>
+                                    
+                                    <!-- Author and Actions -->
+                                    <div class="flex items-center justify-between mt-4">
+                                        <div class="flex items-center">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                By <?php echo htmlspecialchars($article['author_name']); ?>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button onclick="editArticle(<?php echo $article['id']; ?>)" 
+                                                    class="text-blue-500 hover:text-blue-600 dark:text-blue-400">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                            </button>
+                                            <button onclick="deleteArticle(<?php echo $article['id']; ?>)" 
+                                                    class="text-red-500 hover:text-red-600 dark:text-red-400">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                        
+                        if (empty($userArticles)) {
+                            echo '<div class="col-span-full text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No articles</h3>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new article</p>
+                                    <div class="mt-6">
+                                        <button onclick="window.location.href=\'#addarticlesTab\'" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                            </svg>
+                                            New Article
+                                        </button>
+                                    </div>
+                                </div>';
+                        }
+                    } catch (Exception $e) {
+                        echo '<div class="col-span-full p-4 text-center text-red-500 bg-white dark:bg-gray-800 rounded-lg shadow">
+                                Error loading articles: ' . htmlspecialchars($e->getMessage()) . '
+                            </div>';
+                    }
+                    ?>
+                </div>
+            </div>
+            
+            <div id="addarticlesTab" class="dashboard-content hidden">
+                <h1 class="text-3xl font-bold mb-6 dark:text-white">Add Article</h1>
+                <div id="addarticlesList" class="space-y-4">
+                <h1 class="text-2xl font-bold mb-6 text-center">Create a New Article</h1>
+                    <form id="articleForm" method="POST" enctype="multipart/form-data" class="space-y-4">
+                        <!-- Title Input -->
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                            <input
+                                type="text"
+                                id="title"
+                                name="title"
+                                required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter article title"
+                            />
+                        </div>
+                        <!-- Content Input -->
+                        <div>
+                            <label for="content" class="block text-sm font-medium text-gray-700">Content</label>
+                            <textarea
+                                id="content"
+                                name="content"
+                                rows="4"
+                                required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Write your article content here"
+                            ></textarea>
+                        </div>
+                        <!-- Image Upload -->
+                        <div>
+                            <label for="image" class="block text-sm font-medium text-gray-700">Upload Image</label>
+                            <input
+                                type="file"
+                                id="image"
+                                name="image"
+                                accept="image/jpeg, image/png, image/gif"
+                                required
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            <p class="text-xs text-gray-500 mt-1">Allowed formats: JPEG, PNG, GIF. Max size: 5MB.</p>
+                        </div>
+                        <!-- Submit Button -->
+                        <div>
+                            <button
+                                type="submit"
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                Create Article
+                            </button>
+                        </div>
+                    </form> 
+                </div>
+            </div>
+
             <div id="settingsTab" class="dashboard-content hidden">
                 <h1 class="text-3xl font-bold mb-6 dark:text-white">Account Settings</h1>
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
@@ -288,6 +461,7 @@ include('../template/header.php');
 </script>
 <script src="../js/reviews.js"></script>
 <script src="../js/reviewDelete.js"></script>
+<script src="../js/articles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

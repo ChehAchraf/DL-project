@@ -6,6 +6,8 @@ use Classes\User;
 use Classes\Admin;
 use Helpers\Database;
 use Classes\Client;
+use Classes\Session;
+use Classes\Article;
 
 // $db = new Database();
 // $pdo = $db->getConnection();
