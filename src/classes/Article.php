@@ -11,8 +11,10 @@ class Article {
         $this->user_id = $user_id;
     }
 
-    public function CreatePost($pdo, $title, $content, $imageFile, $category_id = null) {
+    public function CreatePost($pdo, $title, $content, $imageFile, $category_id = null, $tags = []) {
         try {
+            $pdo->beginTransaction();
+
             // Validate inputs
             if (empty($title) || empty($content)) {
                 throw new \Exception("Title and content are required.");
@@ -52,12 +54,44 @@ class Article {
             ];
 
             if (!$stmt->execute($params)) {
-                $error = $stmt->errorInfo();
-                throw new \Exception("Database error: " . ($error[2] ?? 'Unknown error'));
+                throw new \Exception("Failed to create article");
             }
 
+            $articleId = $pdo->lastInsertId();
+
+            // Handle tags
+            if (!empty($tags)) {
+                foreach ($tags as $tagName) {
+                    // Try to find existing tag
+                    $stmt = $pdo->prepare("SELECT id FROM tags WHERE name = :name");
+                    $stmt->execute(['name' => trim($tagName)]);
+                    $tag = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+                    // If tag doesn't exist, create it
+                    if (!$tag) {
+                        $stmt = $pdo->prepare("INSERT INTO tags (name) VALUES (:name)");
+                        $stmt->execute(['name' => trim($tagName)]);
+                        $tagId = $pdo->lastInsertId();
+                    } else {
+                        $tagId = $tag['id'];
+                    }
+
+                    // Create article-tag relationship
+                    $stmt = $pdo->prepare("
+                        INSERT INTO article_tags (article_id, tag_id) 
+                        VALUES (:article_id, :tag_id)
+                    ");
+                    $stmt->execute([
+                        'article_id' => $articleId,
+                        'tag_id' => $tagId
+                    ]);
+                }
+            }
+
+            $pdo->commit();
             return "Article created successfully";
         } catch (\Exception $e) {
+            $pdo->rollBack();
             throw new \Exception("Failed to create article: " . $e->getMessage());
         }
     }
@@ -102,7 +136,7 @@ class Article {
             throw new \Exception("Image upload failed: " . $e->getMessage());
         }
     }
-    
+
     public function getAllArticles($pdo) {
         try {
             $stmt = $pdo->prepare("
@@ -113,11 +147,15 @@ class Article {
                     a.image,
                     a.user_id, 
                     c.name as category_name,
-                    u.name as author_name
+                    u.name as author_name,
+                    GROUP_CONCAT(t.name) as tags
                 FROM articles a
                 LEFT JOIN category_blog c ON c.id = a.category_id
                 LEFT JOIN users u ON u.id = a.user_id
+                LEFT JOIN article_tags at ON at.article_id = a.id
+                LEFT JOIN tags t ON t.id = at.tag_id
                 WHERE a.user_id = :user_id
+                GROUP BY a.id
                 ORDER BY a.created_at DESC
             ");
             
@@ -127,6 +165,7 @@ class Article {
             throw new \Exception("Failed to fetch articles: " . $e->getMessage());
         }
     }
+
     public function DeleteArticle($pdo, $ArticleId) {
         try {
             // Validate article ownership
@@ -142,7 +181,7 @@ class Article {
                 throw new \Exception("You don't have permission to delete this article");
             }
 
-            // Delete the article
+            // Delete will cascade to article_tags due to foreign key constraint
             $stmt = $pdo->prepare('DELETE FROM articles WHERE id = :id AND user_id = :user_id');
             $result = $stmt->execute([
                 'id' => $ArticleId,
@@ -156,6 +195,32 @@ class Article {
             return "Article deleted successfully";
         } catch (\PDOException $e) {
             throw new \Exception("Database error: " . $e->getMessage());
+        }
+    }
+    public function listArticles($pdo) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT 
+                    a.id, 
+                    a.title, 
+                    a.content, 
+                    a.image,
+                    a.user_id, 
+                    c.name as category_name,
+                    u.name as author_name,
+                    GROUP_CONCAT(t.name) as tags
+                FROM articles a
+                LEFT JOIN category_blog c ON c.id = a.category_id
+                LEFT JOIN users u ON u.id = a.user_id
+                LEFT JOIN article_tags at ON at.article_id = a.id
+                LEFT JOIN tags t ON t.id = at.tag_id
+                GROUP BY a.id
+                ORDER BY a.created_at DESC
+            ");
+            $stmt->execute();
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            throw new \Exception("Failed to fetch articles: " . $e->getMessage());
         }
     }
 }

@@ -1,4 +1,3 @@
-
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -107,10 +106,56 @@ CREATE TABLE IF NOT EXISTS `category_blog`(
 -- create tags table for blog 
 CREATE TABLE IF NOT EXISTS `tags`(
     `id` INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    `name` VARCHAR(50) NOT NULL,
+    `name` VARCHAR(50) NOT NULL UNIQUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- create article_tags junction table
+CREATE TABLE IF NOT EXISTS `article_tags` (
+    `article_id` INT(11) NOT NULL,
+    `tag_id` INT(11) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`article_id`, `tag_id`),
+    FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE CASCADE
+);
+
 alter table articles add column category_id int;
 alter table articles add foreign key (category_id) references category_blog(id) on delete set null;
 alter table articles add column tag_id int;
 alter table articles add foreign key (tag_id) references tags(id) on delete set null;
+
+-- Insert sample tags if they don't exist
+INSERT INTO tags (name) VALUES 
+('Technology'),
+('Web Development'),
+('Design'),
+('Programming'),
+('UI/UX'),
+('Database'),
+('Security'),
+('Mobile'),
+('Cloud'),
+('DevOps');
+
+-- Insert sample data into article_tags junction table
+INSERT INTO article_tags (article_id, tag_id) VALUES 
+(1, 1),  -- Article 1 with Technology
+(1, 2),  -- Article 1 with Web Development
+(1, 3),  -- Article 1 with Design
+(2, 2),  -- Article 2 with Web Development
+(2, 4),  -- Article 2 with Programming
+(3, 1),  -- Article 3 with Technology
+(3, 3),  -- Article 3 with Design
+(4, 2),  -- Article 4 with Web Development
+(4, 4),  -- Article 4 with Programming
+(5, 1),  -- Article 5 with Technology
+(5, 3),  -- Article 5 with Design
+(6, 2),  -- Article 6 with Web Development
+(6, 4),  -- Article 6 with Programming
+(1, 5),  -- Article 1 with UI/UX
+(2, 6),  -- Article 2 with Database
+(3, 7),  -- Article 3 with Security
+(4, 8),  -- Article 4 with Mobile
+(5, 9),  -- Article 5 with Cloud
+(6, 10); -- Article 6 with DevOps

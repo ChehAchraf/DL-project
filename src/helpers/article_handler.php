@@ -67,6 +67,7 @@ try {
             $title = $_POST['title'] ?? '';
             $content = $_POST['content'] ?? '';
             $category_id = $_POST['category_id'] ?? null;
+            $tags = isset($_POST['tags']) ? explode(',', $_POST['tags']) : [];
             
             if (empty($title) || empty($content)) {
                 handleError('Title and content are required');
@@ -78,7 +79,8 @@ try {
                     $title, 
                     $content, 
                     $_FILES['image'] ?? null,
-                    $category_id
+                    $category_id,
+                    array_map('trim', array_filter($tags))
                 );
                 sendJsonResponse([
                     'success' => true,
