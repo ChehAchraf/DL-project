@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS `tags`(
 CREATE TABLE IF NOT EXISTS `article_tags` (
     `article_id` INT(11) NOT NULL,
     `tag_id` INT(11) NOT NULL,
+    'is_accpted' enum('pending', 'accepted', 'rejected') default 'pending',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`article_id`, `tag_id`),
     FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE,

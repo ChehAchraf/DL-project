@@ -1,8 +1,5 @@
 <?php
-// Start output buffering to catch any unwanted output
 ob_start();
-
-// Enable error reporting but don't display them
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
@@ -15,18 +12,14 @@ use Classes\Admin;
 use Classes\Article;
 use Classes\Session;
 
-// Function to send JSON response and exit
 function sendJsonResponse($data, $code = 200) {
-    // Clear any previous output
     ob_clean();
-    
     http_response_code($code);
     echo json_encode($data, JSON_THROW_ON_ERROR);
     ob_end_flush();
     exit;
 }
 
-// Function to handle errors
 function handleError($message, $code = 400) {
     sendJsonResponse([
         'success' => false,
@@ -34,12 +27,10 @@ function handleError($message, $code = 400) {
     ], $code);
 }
 
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Debug information
 $debug = [
     'post' => $_POST,
     'files' => $_FILES,
@@ -47,7 +38,6 @@ $debug = [
 ];
 
 try {
-    // Validate session
     if (!isset($_SESSION['id'])) {
         handleError('User not authenticated', 401);
     }
@@ -67,7 +57,13 @@ try {
             $title = $_POST['title'] ?? '';
             $content = $_POST['content'] ?? '';
             $category_id = $_POST['category_id'] ?? null;
-            $tags = isset($_POST['tags']) ? explode(',', $_POST['tags']) : [];
+            $rawTags = $_POST['tags'] ?? [];
+            $tags = [];
+            if (is_array($rawTags)) {
+                $tags = $rawTags;
+            } elseif (is_string($rawTags)) {
+                $tags = array_filter(array_map('trim', explode(',', $rawTags)));
+            }
             
             if (empty($title) || empty($content)) {
                 handleError('Title and content are required');
@@ -80,7 +76,7 @@ try {
                     $content, 
                     $_FILES['image'] ?? null,
                     $category_id,
-                    array_map('trim', array_filter($tags))
+                    $tags
                 );
                 sendJsonResponse([
                     'success' => true,
@@ -99,7 +95,7 @@ try {
             }
             
             try {
-                $response = $article->DeleteArticle($pdo, $articleId);
+                $response = $article->DeletePost($pdo, $articleId);
                 sendJsonResponse([
                     'success' => true,
                     'message' => $response

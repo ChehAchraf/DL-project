@@ -352,16 +352,46 @@ include('../template/header.php');
                         }
                         ?>
                         <!-- Tags Input -->
-                        <div>
-                            <label for="tags" class="block text-sm font-medium text-gray-700">Tags</label>
-                            <input
-                                type="text"
-                                id="tags"
-                                name="tags"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter tags separated by commas (e.g., technology, programming, web)"
-                            >
-                            <p class="mt-1 text-sm text-gray-500">Separate tags with commas</p>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Tags</label>
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    name="tag_search"
+                                    placeholder="Enter multiple tags separated by commas..."
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    hx-post="../helpers/tag_handler.php?action=mass_check"
+                                    hx-trigger="keyup changed delay:500ms"
+                                    hx-target="#tag-suggestions"
+                                />
+                                <div 
+                                    id="tag-suggestions" 
+                                    class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
+                                ></div>
+                            </div>
+                            
+                            <!-- Selected Tags -->
+                            <div id="selected-tags" class="flex flex-wrap gap-2 mt-2">
+                                <?php
+                                if (isset($article) && !empty($article['tags'])) {
+                                    $tags = explode(',', $article['tags']);
+                                    foreach ($tags as $tag):
+                                ?>
+                                    <div class="group px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 flex items-center gap-1">
+                                        <span><?= htmlspecialchars(trim($tag)) ?></span>
+                                        <input type="hidden" name="tags[]" value="<?= htmlspecialchars(trim($tag)) ?>">
+                                        <button 
+                                            type="button"
+                                            class="ml-1 text-blue-600 hover:text-blue-800"
+                                            onclick="this.parentElement.remove()"
+                                        >×</button>
+                                    </div>
+                                <?php 
+                                    endforeach;
+                                }
+                                ?>
+                            </div>
+                            <p class="text-sm text-gray-500">Press Enter to add all tags at once</p>
                         </div>
                         <!-- Image Upload -->
                         <div>

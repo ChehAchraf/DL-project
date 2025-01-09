@@ -5,22 +5,31 @@ async function submitArticle(event) {
     
     try {
         const form = document.getElementById('articleForm');
-        const data = new FormData(form);
+        const formData = new FormData(form);
+
+        const tagInputs = form.querySelectorAll('#selected-tags input[type="hidden"]');
+        
+        formData.delete('tags');
+        formData.delete('tags[]');
+        
+        tagInputs.forEach(input => {
+            formData.append('tags[]', input.value);
+        });
         
         const response = await fetch('../helpers/article_handler.php', {
             method: 'POST',
-            body: data
+            body: formData
         });
 
-        // Check if response is OK
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Get the response text for debugging
         const responseText = await response.text();
+        console.log('Server response:', responseText);
         
-        // Try to parse the JSON
         let jsonData;
         try {
             jsonData = JSON.parse(responseText);
@@ -55,22 +64,18 @@ function DeleteArticle(article_id) {
             const formData = new FormData();
             formData.append('action', 'delete');
             formData.append('article_id', article_id);
-
+            
             fetch('../helpers/article_handler.php', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success').then(() => {
+                    Swal.fire('Deleted!', data.message, 'success');
+                    setTimeout(() => {
                         window.location.reload();
-                    });
+                    }, 1500);
                 } else {
                     throw new Error(data.message || 'Failed to delete article');
                 }

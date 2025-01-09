@@ -22,15 +22,12 @@ if(isset($_SESSION['role']) && $_SESSION['role'] == "admin"){
 include('../template/header.php') 
 ?>
     <script>
-        // Dark mode toggle
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
             localStorage.setItem('dark-mode', document.documentElement.classList.contains('dark'));
         }
 
-        // Tab switching
         function switchTab(tabName) {
-            // Hide all tabs
             const tabs = ['dashboard', 'cars', 'reservations', 'clients', 'add-car', 'reviews', 'categories'];
             tabs.forEach(tab => {
                 const tabElement = document.getElementById(tab + 'Tab');
@@ -39,16 +36,13 @@ include('../template/header.php')
                 if (navElement) navElement.classList.remove('bg-blue-600', 'text-white');
             });
             
-            // Show selected tab
             const selectedTab = document.getElementById(tabName + 'Tab');
             const selectedNav = document.getElementById(tabName + 'NavItem');
             if (selectedTab) selectedTab.classList.remove('hidden');
             if (selectedNav) selectedNav.classList.add('bg-blue-600', 'text-white');
         }
 
-        // Initialize charts
         function initCharts() {
-            // Revenue Chart
             new Chart(document.getElementById('revenueChart'), {
                 type: 'line',
                 data: {
@@ -62,7 +56,6 @@ include('../template/header.php')
                 }
             });
 
-            // Reservations Chart
             new Chart(document.getElementById('reservationsChart'), {
                 type: 'bar',
                 data: {
@@ -166,6 +159,15 @@ include('../template/header.php')
                         class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center"
                     >
                         <i class="fas fa-list mr-3"></i> Categories
+                    </button>
+                </li>
+                <li>
+                    <button 
+                        id="postmanageNavItem"
+                        onclick="switchTab('postmanage')" 
+                        class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center"
+                    >
+                        <i class="fas fa-newspaper mr-3"></i> Post Management
                     </button>
                 </li>
             </ul>
@@ -958,44 +960,167 @@ include('../template/header.php')
     </div>
 </div>
 <!-- Categories Tab -->
-<div id="categoriesTab" class="hidden">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Categories Management</h2>
-        <button onclick="document.getElementById('addCategoryModal').classList.remove('hidden')" 
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            <i class="fas fa-plus mr-2"></i>Add Category
-        </button>
+    <div id="categoriesTab" class="hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Categories Management</h2>
+            <button onclick="document.getElementById('addCategoryModal').classList.remove('hidden')" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i>Add Category
+            </button>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-700">
+                        <th class="p-4 text-left">ID</th>
+                        <th class="p-4 text-left">Name</th>
+                        <th class="p-4 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($categories as $category): ?>
+                        <tr class="border-b dark:border-gray-700">
+                            <td class="p-4"><?= $category['id'] ?></td>
+                            <td class="p-4"><?= htmlspecialchars($category['name']) ?></td>
+                            <td class="p-4">
+                                <button onclick="openEditCategoryModal(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>')" class="text-blue-500 hover:text-blue-700 mr-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteCategory(<?= $category['id'] ?>)" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="postmanageTab" class="hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Post Management</h2>
+        </div>
+
+        <div id="postshowdiv" hx-trigger="load" hx-post="../helpers/articles_admin_handler.php?action=get_post" hx-swap="innerHTML" hx-target="#postshowdiv" class="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Post Card Template -->
+            
+
+        </div>
+
+        <!-- Post Details Modal -->
+        <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl mx-4">
+                <div id="postDetailsContent" class="p-6">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function viewPostDetails(postId) {
+                const modal = document.getElementById('postModal');
+                const content = document.getElementById('postDetailsContent');
+                
+                // Show modal
+                modal.classList.remove('hidden');
+                
+                // Load post details
+                fetch(`../helpers/articles_admin_handler.php?action=post_details&id=${postId}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        content.innerHTML = html;
+                    })
+                    .catch(error => {
+                        content.innerHTML = '<div class="text-red-500">Error loading post details</div>';
+                        console.error('Error:', error);
+                    });
+            }
+
+            function closePostModal() {
+                document.getElementById('postModal').classList.add('hidden');
+            }
+
+            function approvePost(postId) {
+                if (!confirm('Are you sure you want to approve this post?')) return;
+
+                fetch('../helpers/articles_admin_handler.php?action=approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `id=${postId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message,
+                            icon: 'success'
+                        }).then(() => {
+                            closePostModal();
+                            // Refresh the posts list
+                            document.getElementById('postshowdiv').dispatchEvent(new Event('htmx:load'));
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'Failed to approve post',
+                        icon: 'error'
+                    });
+                });
+            }
+
+            function rejectPost(postId) {
+                if (!confirm('Are you sure you want to reject this post?')) return;
+
+                fetch('../helpers/articles_admin_handler.php?action=reject', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `id=${postId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message,
+                            icon: 'success'
+                        }).then(() => {
+                            closePostModal();
+                            // Refresh the posts list
+                            document.getElementById('postshowdiv').dispatchEvent(new Event('htmx:load'));
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'Failed to reject post',
+                        icon: 'error'
+                    });
+                });
+            }
+
+            // Close modal when clicking outside
+            document.getElementById('postModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closePostModal();
+                }
+            });
+        </script>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <table class="w-full">
-            <thead>
-                <tr class="bg-gray-50 dark:bg-gray-700">
-                    <th class="p-4 text-left">ID</th>
-                    <th class="p-4 text-left">Name</th>
-                    <th class="p-4 text-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($categories as $category): ?>
-                    <tr class="border-b dark:border-gray-700">
-                        <td class="p-4"><?= $category['id'] ?></td>
-                        <td class="p-4"><?= htmlspecialchars($category['name']) ?></td>
-                        <td class="p-4">
-                            <button onclick="openEditCategoryModal(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>')" class="text-blue-500 hover:text-blue-700 mr-2">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteCategory(<?= $category['id'] ?>)" class="text-red-500 hover:text-red-700">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-<script>
+    <script>
 function viewReviewDetails(reviewId) {
     // Find the review data from the table row
     const row = document.querySelector(`tr[data-review-id="${reviewId}"]`);
@@ -1030,9 +1155,6 @@ function viewReviewDetails(reviewId) {
     modal.classList.add('flex');
 }
 
-function validateCategoryName(name) {
-    return name.trim() !== ''; // Check if the input is not just spaces
-}
 function deleteCategory(categoryId) {
     Swal.fire({
         title: 'Are you sure?',
